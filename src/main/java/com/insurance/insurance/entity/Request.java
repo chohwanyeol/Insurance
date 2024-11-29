@@ -17,6 +17,9 @@ public class Request {
     @ManyToOne
     private SiteUser siteUser;
 
+    @ManyToOne
+    private Insurance insurance;
+
     private Integer request_price;
     private Integer payment_price;
     private Timestamp request_date;

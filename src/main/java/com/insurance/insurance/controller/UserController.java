@@ -8,6 +8,7 @@ import com.insurance.insurance.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 
 @RequiredArgsConstructor
-@RestController
+@Controller
 public class UserController {
     private final UserService userService;
     private final UserInfoService userInfoService;
@@ -34,7 +35,7 @@ public class UserController {
         if (signUpDTO.passwordMatching()) {
             return ResponseEntity.badRequest().body("비밀번호가 일치하지 않습니다.");
         }
-        SiteUser siteUser = userService.createUserByDTO(signUpDTO);
+        SiteUser siteUser = userService.createByDTO(signUpDTO);
         UserInfo userInfo = userInfoService.createUserInfoByDTO(signUpDTO);
         return ResponseEntity.ok("회원가입 성공");
     }

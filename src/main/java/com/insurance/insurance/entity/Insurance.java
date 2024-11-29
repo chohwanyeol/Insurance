@@ -15,8 +15,10 @@ public class Insurance {
     private Integer id;
     @ManyToOne
     private SiteUser siteUser;
+
     @ManyToOne
     private Product product;
+
     private Integer price;
     private String bank;
     private String BankAccount;

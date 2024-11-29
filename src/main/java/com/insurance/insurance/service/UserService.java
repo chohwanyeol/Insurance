@@ -2,6 +2,7 @@ package com.insurance.insurance.service;
 
 import com.insurance.insurance.dto.SignUpDTO;
 import com.insurance.insurance.entity.SiteUser;
+import com.insurance.insurance.exception.DataNotFoundException;
 import com.insurance.insurance.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -13,7 +14,7 @@ public class UserService {
     private UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public SiteUser createUserByDTO(SignUpDTO signUpDTO) {
+    public SiteUser createByDTO(SignUpDTO signUpDTO) {
         String username = signUpDTO.getUsername();
         String password = signUpDTO.getPassword();
         String email = signUpDTO.getEmail();
@@ -25,5 +26,11 @@ public class UserService {
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(password));
         return userRepository.save(user);
+    }
+
+
+    public SiteUser getByUsername(String username) {
+        SiteUser siteUser = userRepository.findByUsername(username).orElseThrow(()->new DataNotFoundException("해당 유저가 존재하지않음 : "+username ));
+        return siteUser;
     }
 }
