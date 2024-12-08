@@ -1,10 +1,12 @@
 package com.insurance.insurance.controller;
 
 
+
 import com.insurance.insurance.entity.Product;
 import com.insurance.insurance.exception.DataNotFoundException;
 import com.insurance.insurance.service.ProductService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
@@ -20,14 +22,18 @@ public class MainController {
 
     //메인화면
     @GetMapping("")
-    public String root(){
-        return "redirect:/main";
+    public ResponseEntity<?> root(){
+        return ResponseEntity.status(HttpStatus.SEE_OTHER)
+                .header("Location", "/main")
+                .build();
     }
 
     //메인화면
     @GetMapping("")
-    public String main(){
-        return "main";
+    public ResponseEntity<?> main(){
+        return ResponseEntity.status(HttpStatus.SEE_OTHER)
+                .header("Location", "/main")
+                .build();
     }
 
 }

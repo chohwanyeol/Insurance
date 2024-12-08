@@ -1,13 +1,9 @@
 package com.insurance.insurance.dto;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 
-import java.time.LocalDate;
-
-public class AutoDTO {
+public class AutoJoinDTO {
 
     @NotBlank(message = "은행을 입력해주세요.")
     private String bank;

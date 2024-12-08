@@ -13,8 +13,7 @@ public class HealthInsurance {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-
-    @ManyToOne
     private Insurance insurance;
+
     private String pre_existing_conditions;
 }
