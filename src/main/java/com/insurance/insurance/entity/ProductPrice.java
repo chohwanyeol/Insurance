@@ -1,22 +1,23 @@
 package com.insurance.insurance.entity;
 
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.List;
+import java.time.LocalDate;
 
-
-@Entity
 @Getter
 @Setter
-public class HealthInsurance {
+@Entity
+public class ProductPrice {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    private Insurance insurance;
-    private List<String> family;
-    private List<String> pre_existing_conditions;
+    @OneToOne
+    private Product product;
+
+    private Integer price;
 
 }

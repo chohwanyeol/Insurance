@@ -10,4 +10,5 @@ public interface ProductRepository extends JpaRepository<Product,Integer> {
     List<Product> findAll();
     Optional<Product> findById(Integer id);
 
+    Product findByName(String 건강보험);
 }

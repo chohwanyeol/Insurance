@@ -43,6 +43,20 @@ public class JoinController {
     }
 
     @PreAuthorize("isAuthenticated")
+    @PostMapping("/health")
+    public ResponseEntity<?> postHealthProduct(@AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody HealthJoinDTO healthJoinDTO){
+        // 비동기 처리 - 건강보험 가입 요청 처리
+        /*   ai에게 가입 가능 판별 및 리스크 책정 후 메일로 결과 발송?  */
+        String username = userDetails.getUsername(); // 인증된 사용자 이름 가져오기
+        SiteUser siteUser = userService.getByUsername(username);
+        insuranceService.createHealth(siteUser,healthJoinDTO);
+        return ResponseEntity.ok("가입 신청 되었습니다."); // 신청 완료 응답
+    }
+
+
+
+
+    @PreAuthorize("isAuthenticated")
     @GetMapping("/auto")
     public ResponseEntity<?> getAutoProduct(@AuthenticationPrincipal UserDetails userDetails){
         String username = userDetails.getUsername(); // 인증된 사용자 이름 가져오기
@@ -68,14 +82,7 @@ public class JoinController {
         }
     }
 
-    @PreAuthorize("isAuthenticated")
-    @PostMapping("/health")
-    public ResponseEntity<?> postHealthProduct(@AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody HealthJoinDTO healthJoinDTO){
-        // 비동기 처리 - 건강보험 가입 요청 처리
-        /*   ai에게 가입 가능 판별 및 리스크 책정 후 메일로 결과 발송?  */
-        String username = userDetails.getUsername(); // 인증된 사용자 이름 가져오기
-        return ResponseEntity.ok("가입 신청 되었습니다."); // 신청 완료 응답
-    }
+
 
     @PreAuthorize("isAuthenticated")
     @PostMapping("/auto")

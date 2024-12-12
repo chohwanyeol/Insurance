@@ -10,6 +10,8 @@ import com.insurance.insurance.repository.AutoInsuranceRepository;
 import com.insurance.insurance.repository.FireInsuranceRepository;
 import com.insurance.insurance.repository.HealthInsuranceRepository;
 import com.insurance.insurance.service.InsuranceService;
+import com.insurance.insurance.service.OCRService;
+import com.insurance.insurance.service.RequestService;
 import com.insurance.insurance.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +36,8 @@ public class RequestController {
 
     private final UserService userService;
     private final InsuranceService insuranceService;
+    private final RequestService requestService;
+
 
 
 
@@ -85,6 +89,8 @@ public class RequestController {
 
 
 
+
+
     //자동차보험금 청구 페이지
     @PreAuthorize("isAuthenticated")
     @GetMapping("/auto")
@@ -120,6 +126,8 @@ public class RequestController {
 
 
 
+
+
     //건강보험금 청구 페이지
     @PreAuthorize("isAuthenticated")
     @GetMapping("")
@@ -145,8 +153,8 @@ public class RequestController {
             HealthInsurance healthInsurance = insuranceService.getHealthBySiteUser(siteUser);
 
             //비동기 신청
+            requestService.requestHealth(siteUser,healthRequestDTO);
             //결과 메일
-
 
             return ResponseEntity.ok(Map.of("status",true));
         }catch (DataNotFoundException e){

@@ -41,10 +41,11 @@ public class UserController {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginDto.getUsername(), loginDto.getPassword())
         );
-
         String token = jwtTokenProvider.generateToken(loginDto.getUsername(), "ROLE_USER");
         return ResponseEntity.ok(Map.of("token", token));
     }
+
+
 
     @GetMapping("/user/signup")
     public String signup(){

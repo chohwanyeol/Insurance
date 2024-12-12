@@ -4,19 +4,19 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.List;
-
 
 @Entity
 @Getter
 @Setter
-public class HealthInsurance {
+public class RiskRank {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    private Insurance insurance;
-    private List<String> family;
-    private List<String> pre_existing_conditions;
+    @Column(unique = true)
+    private String name;
 
+    private Integer deductible_rate;
+    private Integer coverage_limit;
+    private Double price_rate;
 }

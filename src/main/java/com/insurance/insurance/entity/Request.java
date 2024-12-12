@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -19,11 +20,20 @@ public class Request {
 
     @ManyToOne
     private Insurance insurance;
-
-    private Integer request_price;
-    private Integer payment_price;
-    private Timestamp request_date;
-    private Timestamp payment_date;
-
+    private String claimType;
+    private String content;
+    private Integer price;
+    private LocalDateTime request_date;
+    private LocalDateTime payment_date;
     private String status;
+
+    public Request(Insurance insurance, String claimType, String content, Integer price, LocalDateTime request_date, String status) {
+        this.insurance = insurance;
+        this.claimType = claimType;
+        this.content = content;
+        this.price = price;
+        this.request_date = request_date;
+        this.status = status;
+    }
+
 }
