@@ -2,6 +2,7 @@ package com.insurance.insurance.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
@@ -10,13 +11,17 @@ import java.util.List;
 @Entity
 @Getter
 @Setter
+@NoArgsConstructor
 public class HealthInsurance {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @OneToOne
     private Insurance insurance;
-    private List<String> family;
-    private List<String> pre_existing_conditions;
+
+    private String family;
+
+    private String preExistingConditions;
 
 }

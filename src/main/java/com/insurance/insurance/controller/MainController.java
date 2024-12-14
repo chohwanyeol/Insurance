@@ -28,12 +28,4 @@ public class MainController {
                 .build();
     }
 
-    //메인화면
-    @GetMapping("")
-    public ResponseEntity<?> main(){
-        return ResponseEntity.status(HttpStatus.SEE_OTHER)
-                .header("Location", "/main")
-                .build();
-    }
-
 }

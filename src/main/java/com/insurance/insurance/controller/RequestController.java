@@ -9,10 +9,7 @@ import com.insurance.insurance.exception.DataNotFoundException;
 import com.insurance.insurance.repository.AutoInsuranceRepository;
 import com.insurance.insurance.repository.FireInsuranceRepository;
 import com.insurance.insurance.repository.HealthInsuranceRepository;
-import com.insurance.insurance.service.InsuranceService;
-import com.insurance.insurance.service.OCRService;
-import com.insurance.insurance.service.RequestService;
-import com.insurance.insurance.service.UserService;
+import com.insurance.insurance.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.apache.tomcat.util.http.parser.Authorization;
@@ -28,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 @RequestMapping("/request")
 @Controller
@@ -37,6 +35,8 @@ public class RequestController {
     private final UserService userService;
     private final InsuranceService insuranceService;
     private final RequestService requestService;
+    private final TransactionService transactionService;
+
 
 
 
@@ -130,7 +130,7 @@ public class RequestController {
 
     //건강보험금 청구 페이지
     @PreAuthorize("isAuthenticated")
-    @GetMapping("")
+    @GetMapping("/health")
     public ResponseEntity<?> getHealthInsurances(@AuthenticationPrincipal UserDetails userDetails){
         String username = userDetails.getUsername();
         SiteUser siteUser = userService.getByUsername(username);
@@ -145,7 +145,7 @@ public class RequestController {
 
     //건강보험금 청구 페이지
     @PreAuthorize("isAuthenticated")
-    @PostMapping("")
+    @PostMapping("/health")
     public ResponseEntity<?> postHealthInsurances(@AuthenticationPrincipal UserDetails userDetails, @Valid HealthRequestDTO healthRequestDTO){
         String username = userDetails.getUsername();
         SiteUser siteUser = userService.getByUsername(username);
@@ -153,8 +153,8 @@ public class RequestController {
             HealthInsurance healthInsurance = insuranceService.getHealthBySiteUser(siteUser);
 
             //비동기 신청
-            requestService.requestHealth(siteUser,healthRequestDTO);
-            //결과 메일
+            CompletableFuture<Request> requestFuture = requestService.requestHealth(siteUser, healthRequestDTO);
+            requestFuture.thenCompose(request -> transactionService.transaction(siteUser, request));
 
             return ResponseEntity.ok(Map.of("status",true));
         }catch (DataNotFoundException e){

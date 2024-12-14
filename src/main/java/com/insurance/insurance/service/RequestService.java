@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequiredArgsConstructor
@@ -22,9 +23,10 @@ public class RequestService {
     private final OCRService ocrService;
     private final ChatGPTService chatGPTService;
     private final InsuranceService insuranceService;
+    private final TransactionService transactionService;
 
 
-    public Request requestHealth(SiteUser siteUser, HealthRequestDTO healthRequestDTO){
+    public CompletableFuture<Request> requestHealth(SiteUser siteUser, HealthRequestDTO healthRequestDTO){
         UserInfo userInfo = userInfoRepository.findBySiteUser(siteUser).orElseThrow(
                 ()->new DataNotFoundException("해당 유저가 없습니다."));
 
@@ -68,10 +70,10 @@ public class RequestService {
         price = (int)Math.min(price * (deductible_rate/100), coverage_limit);
         //request 생성
         LocalDateTime request_date = LocalDateTime.now();
-        Request request = new Request(insurance,claimType,content,price,request_date,"pending");
+        Request request = new Request(insurance,claimType,content,price,request_date,"확인중");
 
-        return requestRepository.save(request);
-
+        request= requestRepository.save(request);
+        return CompletableFuture.completedFuture(request);
 
     }
 

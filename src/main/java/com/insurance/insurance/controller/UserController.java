@@ -14,16 +14,14 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
 
 @RequiredArgsConstructor
 @Controller
+@RequestMapping("/user")
 public class UserController {
     private final UserService userService;
     private final UserInfoService userInfoService;
@@ -31,12 +29,12 @@ public class UserController {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
 
-    @GetMapping("/user/login")
+    @GetMapping("/login")
     public String login(){
         return "login";
     }
 
-    @PostMapping("/user/login")
+    @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginDTO loginDto) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginDto.getUsername(), loginDto.getPassword())
@@ -47,12 +45,12 @@ public class UserController {
 
 
 
-    @GetMapping("/user/signup")
+    @GetMapping("/signup")
     public String signup(){
         return "signup";
     }
 
-    @PostMapping("/user/signup")
+    @PostMapping("/signup")
     public ResponseEntity<?> signup(@Valid @RequestBody SignUpDTO signUpDTO){
         if (signUpDTO.passwordMatching()) {
             return ResponseEntity.badRequest().body("비밀번호가 일치하지 않습니다.");

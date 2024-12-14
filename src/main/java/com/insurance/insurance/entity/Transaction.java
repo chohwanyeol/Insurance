@@ -1,17 +1,18 @@
 package com.insurance.insurance.entity;
 
 
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@Entity
 public class Transaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
@@ -22,7 +23,10 @@ public class Transaction {
 
     private Integer price;
 
-    private Timestamp date;
+    private LocalDateTime dateTime;
 
     private String status;
+
+    public Transaction(SiteUser siteUser, Integer price, LocalDateTime dateTime, String status) {
+    }
 }

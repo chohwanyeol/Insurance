@@ -2,6 +2,8 @@ package com.insurance.insurance.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 import java.sql.Timestamp;
@@ -10,21 +12,22 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Entity
+@NoArgsConstructor
 public class Insurance {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
     @ManyToOne
     private SiteUser siteUser;
 
     @ManyToOne
     private Product product;
 
-    private Integer riskScore;
-    @OneToOne
+    @ManyToOne
     private RiskRank riskRank;
 
-
+    private Integer riskScore;
     private Integer price;
     private String bank;
     private String bankAccount;

@@ -34,19 +34,29 @@ public class InsuranceService {
     }
 
     public FireInsurance getFireBySiteUser(SiteUser siteUser) {
-        FireInsurance fireInsurance = fireInsuranceRepository.findBySiteUser(siteUser)
+        Product product = productRepository.findByName("화재보험");
+        List<Insurance> insuranceList = insuranceRepository.findBySiteUserAndProduct(siteUser,product);
+        Insurance insurance = new Insurance();
+
+        FireInsurance fireInsurance = fireInsuranceRepository.findByInsuranceAndPropertyAddressAndBuildingType(insurance,"임시","임시")
                 .orElseThrow(()->new DataNotFoundException("해당 가입내용이 존재하지 않습니다."));
         return fireInsurance;
     }
 
     public AutoInsurance getAutoBySiteUser(SiteUser siteUser) {
-        AutoInsurance autoInsurance = autoInsuranceRepository.findBySiteUser(siteUser)
+        Product product = productRepository.findByName("자동차보험");
+        List<Insurance> insuranceList = insuranceRepository.findBySiteUserAndProduct(siteUser,product);
+        Insurance insurance = new Insurance();
+        AutoInsurance autoInsurance = autoInsuranceRepository.findByInsuranceAndVehicleNumber(insurance,"임시")
                 .orElseThrow(()->new DataNotFoundException("해당 가입내용이 존재하지 않습니다."));
         return autoInsurance;
     }
 
     public HealthInsurance getHealthBySiteUser(SiteUser siteUser) {
-        HealthInsurance healthInsurance = healthInsuranceRepository.findBySiteUser(siteUser)
+        Product product = productRepository.findByName("건강보험");
+        List<Insurance> insuranceList = insuranceRepository.findBySiteUserAndProduct(siteUser,product);
+        Insurance insurance = new Insurance();
+        HealthInsurance healthInsurance = healthInsuranceRepository.findByInsurance(insurance)
                 .orElseThrow(()->new DataNotFoundException("해당 가입내용이 존재하지 않습니다."));
         return healthInsurance;
     }
@@ -84,8 +94,9 @@ public class InsuranceService {
 
         HealthInsurance healthInsurance = new HealthInsurance();
         healthInsurance.setInsurance(insurance);
-        healthInsurance.setFamily(healthJoinDTO.getFamily());
-        healthInsurance.setPre_existing_conditions(healthJoinDTO.getPre_existing_conditions());
+
+        healthInsurance.setFamily(String.join(", ", healthJoinDTO.getFamily()));
+        healthInsurance.setPreExistingConditions(String.join(", ", healthJoinDTO.getPre_existing_conditions()));
         healthInsuranceRepository.save(healthInsurance);
     }
 

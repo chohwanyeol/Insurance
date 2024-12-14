@@ -2,13 +2,14 @@ package com.insurance.insurance.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
-@RequiredArgsConstructor
 @Entity
+@NoArgsConstructor
 public class SiteUser {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

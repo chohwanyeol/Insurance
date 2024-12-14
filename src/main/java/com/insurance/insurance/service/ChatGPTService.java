@@ -1,11 +1,14 @@
 package com.insurance.insurance.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.*;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+
+@Service
 public class ChatGPTService {
 
     private static final String API_URL = "https://api.openai.com/v1/chat/completions";

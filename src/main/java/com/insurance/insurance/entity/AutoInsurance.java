@@ -2,12 +2,14 @@ package com.insurance.insurance.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 
 @Entity
 @Getter
 @Setter
+@NoArgsConstructor
 public class AutoInsurance {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -15,6 +17,7 @@ public class AutoInsurance {
 
     @ManyToOne
     private Insurance insurance;
-    private String vehicle_number;
-    private String accident_history;
+
+    private String vehicleNumber;
+    private String accidentHistory;
 }
