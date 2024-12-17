@@ -7,8 +7,10 @@ import com.insurance.insurance.entity.UserInfo;
 import com.insurance.insurance.jwt.JwtTokenProvider;
 import com.insurance.insurance.service.UserInfoService;
 import com.insurance.insurance.service.UserService;
+import com.insurance.insurance.util.ResponseUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -40,7 +42,7 @@ public class UserController {
                 new UsernamePasswordAuthenticationToken(loginDto.getUsername(), loginDto.getPassword())
         );
         String token = jwtTokenProvider.generateToken(loginDto.getUsername(), "ROLE_USER");
-        return ResponseEntity.ok(Map.of("token", token));
+        return ResponseUtil.createSuccessResponse("token",token);
     }
 
 
@@ -53,10 +55,10 @@ public class UserController {
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@Valid @RequestBody SignUpDTO signUpDTO){
         if (signUpDTO.passwordMatching()) {
-            return ResponseEntity.badRequest().body("비밀번호가 일치하지 않습니다.");
+            return ResponseUtil.createErrorResponse(HttpStatus.BAD_REQUEST,"비밀번호가 일치하지 않습니다.");
         }
         SiteUser siteUser = userService.createByDTO(signUpDTO);
         UserInfo userInfo = userInfoService.createUserInfoByDTO(signUpDTO);
-        return ResponseEntity.ok("회원가입 성공");
+        return ResponseUtil.createSuccessResponse("message","회원가입성공");
     }
 }

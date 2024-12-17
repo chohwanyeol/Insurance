@@ -15,10 +15,11 @@ public class RiskRank {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(unique = true)
     private String name;
+    private Product product;
 
     private Integer deductible_rate;
     private Integer coverage_limit;
+    private String description;
     private Double price_rate;
 }

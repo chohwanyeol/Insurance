@@ -78,5 +78,11 @@ public class RequestService {
     }
 
 
+    public List<Request> getBySiteUser(SiteUser siteUser) {
+        return requestRepository.findAllBySiteUser(siteUser);
+    }
 
+    public Request getBySiteUserAndId(SiteUser siteUser, Integer id) {
+        return requestRepository.findBySiteUserAndId(siteUser,id);
+    }
 }

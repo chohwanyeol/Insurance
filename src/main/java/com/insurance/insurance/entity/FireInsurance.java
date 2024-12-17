@@ -21,4 +21,8 @@ public class FireInsurance {
     private String propertyAddress;
 
     private String buildingType;
+
+    private Integer buildingYear;
+
+    private Boolean previousFire;
 }

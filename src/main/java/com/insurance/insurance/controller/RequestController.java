@@ -38,9 +38,6 @@ public class RequestController {
     private final TransactionService transactionService;
 
 
-
-
-
     //보험금 청구 페이지
     @PreAuthorize("isAuthenticated")
     @GetMapping("")
@@ -123,9 +120,6 @@ public class RequestController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("status",false));
         }
     }
-
-
-
 
 
     //건강보험금 청구 페이지

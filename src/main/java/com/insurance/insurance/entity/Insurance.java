@@ -27,6 +27,9 @@ public class Insurance {
     @ManyToOne
     private RiskRank riskRank;
 
+    @OneToMany
+    private Transaction transaction;
+
     private Integer riskScore;
     private Integer price;
     private String bank;

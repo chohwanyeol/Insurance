@@ -10,16 +10,7 @@ import java.util.List;
 
 @Getter
 @Setter
-public class HealthJoinDTO {
-    @NotBlank(message = "은행을 입력해주세요.")
-    private String bank;
-
-    @NotNull(message = "계좌번호를 입력해주세요.")
-    private String account;
-
-    @NotNull(message = "가입년수를 선택해주세요.")
-    private Integer duration;
-
+public class HealthJoinDTO extends InsuranceJoinDTO{
 
     @NotNull(message = "흡연 여부를 체크해주세요")
     private Boolean smoke;

@@ -21,12 +21,15 @@ public class Transaction {
     @ManyToOne
     private SiteUser siteUser;
 
+    @ManyToOne
+    private Insurance insurance;
+
     private Integer price;
 
     private LocalDateTime dateTime;
 
     private String status;
 
-    public Transaction(SiteUser siteUser, Integer price, LocalDateTime dateTime, String status) {
+    public Transaction(SiteUser siteUser, Insurance insurance, Integer price, LocalDateTime dateTime, String status) {
     }
 }

@@ -20,12 +20,9 @@ import java.util.List;
 public class MainController {
     private final ProductService productService;
 
-    //메인화면
     @GetMapping("")
-    public ResponseEntity<?> root(){
-        return ResponseEntity.status(HttpStatus.SEE_OTHER)
-                .header("Location", "/main")
-                .build();
+    public String root() {
+        return "redirect:/main";
     }
 
 }
