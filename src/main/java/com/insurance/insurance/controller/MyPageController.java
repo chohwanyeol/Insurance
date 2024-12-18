@@ -63,6 +63,7 @@ public class MyPageController {
         return ResponseEntity.ok(request);
     }
 
+    //지급내용
     @GetMapping("/transaction")
     public ResponseEntity<?> myTransaction(@AuthenticationPrincipal UserDetails userDetails){
         SiteUser siteUser = userService.getByUsername(userDetails.getUsername());
@@ -70,6 +71,7 @@ public class MyPageController {
         return ResponseEntity.ok(transactionList);
     }
 
+    //지급내용
     @GetMapping("/transaction/{id}")
     public ResponseEntity<?> myTransactionDetail(@PathVariable("id") Integer id, @AuthenticationPrincipal UserDetails userDetails){
         SiteUser siteUser = userService.getByUsername(userDetails.getUsername());
@@ -77,14 +79,18 @@ public class MyPageController {
         return ResponseEntity.ok(transaction);
     }
 
-    @GetMapping("/renew")
+
+    //갱신
+    @GetMapping("/renewable")
     public ResponseEntity<?> renew(@AuthenticationPrincipal UserDetails userDetails){
         SiteUser siteUser = userService.getByUsername(userDetails.getUsername());
         List<RenewableInsurance> renewableInsuranceList = insuranceService.getRenewableBySiteUser(siteUser);
         return ResponseEntity.ok(renewableInsuranceList);
     }
 
-    @GetMapping("/renew/{id}")
+
+    //갱신
+    @GetMapping("/renewable/{id}")
     public ResponseEntity<?> renewDetail(@PathVariable("id") Integer id, @AuthenticationPrincipal UserDetails userDetails){
         SiteUser siteUser = userService.getByUsername(userDetails.getUsername());
         RenewableInsurance renewableInsurance = insuranceService.getRenewableBySiteUserAndId(siteUser,id);
