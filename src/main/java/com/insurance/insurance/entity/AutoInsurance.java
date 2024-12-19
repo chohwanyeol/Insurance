@@ -16,7 +16,7 @@ public class AutoInsurance {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne
+    @OneToOne
     private Insurance insurance;
 
     private String vehicleNumber;    // 차량 번호

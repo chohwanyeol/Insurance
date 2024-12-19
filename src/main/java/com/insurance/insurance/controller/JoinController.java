@@ -22,6 +22,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -63,7 +64,7 @@ public class JoinController {
         String username = userDetails.getUsername(); // 인증된 사용자 이름 가져오기
         SiteUser siteUser = userService.getByUsername(username); // 사용자 정보 조회
         try{
-            AutoInsurance autoInsurance = insuranceService.getAutoBySiteUser(siteUser); // 자동차보험 가입 여부 확인
+            List<AutoInsurance> autoInsuranceList = insuranceService.getAutoBySiteUser(siteUser); // 자동차보험 가입 여부 확인
             return ResponseUtil.createSuccessResponse("status",false);
         }catch (DataNotFoundException e){
             return ResponseUtil.createSuccessResponse("status",true); // 미가입 상태 반환
@@ -87,7 +88,7 @@ public class JoinController {
         String username = userDetails.getUsername(); // 인증된 사용자 이름 가져오기
         SiteUser siteUser = userService.getByUsername(username); // 사용자 정보 조회
         try{
-            FireInsurance fireInsurance = insuranceService.getFireBySiteUser(siteUser); // 화재보험 가입 여부 확인
+            List<FireInsurance> fireInsuranceList = insuranceService.getFireBySiteUser(siteUser); // 화재보험 가입 여부 확인
             return ResponseUtil.createSuccessResponse("status",false);
         }catch (DataNotFoundException e){
             return ResponseUtil.createSuccessResponse("status",true); // 미가입 상태 반환

@@ -10,7 +10,7 @@ import java.util.Map;
 
 public class ResponseUtil {
 
-    public static ResponseEntity<Map<String, String>> createErrorResponse(HttpStatus status, String message) {
+    public static <T> ResponseEntity<Map<String, T>> createErrorResponse(HttpStatus status, T message) {
         return ResponseEntity.status(status).body(Map.of("message", message));
     }
 

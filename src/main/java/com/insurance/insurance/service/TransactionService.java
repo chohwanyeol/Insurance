@@ -18,6 +18,12 @@ public class TransactionService {
 
     private final TransactionRepository transactionRepository;
     public CompletableFuture<Transaction> transaction(SiteUser siteUser, Request request) {
+        String description = request.getDescription();
+        if (description != null){
+            // 조건을 만족하지 않으면 null 반환
+            return CompletableFuture.completedFuture(null);
+        }
+
         int price = request.getPrice();
         LocalDateTime dateTime = LocalDateTime.now();
         String status = "대기중";

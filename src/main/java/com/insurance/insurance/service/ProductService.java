@@ -26,7 +26,7 @@ public class ProductService {
     }
 
     public Product getByName(String name) {
-        return productRepository.findById(name)
+        return productRepository.findByName(name)
                 .orElseThrow(()-> new DataNotFoundException("Product with name " + name + " not found"));
     }
 }

@@ -14,4 +14,5 @@ public interface InsuranceRepository extends JpaRepository<Insurance, Integer> {
     List<Insurance> findBySiteUserAndProduct(SiteUser siteUser, Product product);
 
     Optional<Insurance> findBySiteUserAndId(SiteUser siteUser, Integer id);
+
 }

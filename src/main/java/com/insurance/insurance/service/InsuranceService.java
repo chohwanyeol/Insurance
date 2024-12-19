@@ -28,39 +28,53 @@ public class InsuranceService {
     private final ProductPriceService productPriceService;
 
 
-
     public List<Insurance> getBySiteUser(SiteUser siteUser) {
         return insuranceRepository.findAllBySiteUser(siteUser);
     }
+
     public Insurance getBySiteUserAndId(SiteUser siteUser, Integer id) {
-        return insuranceRepository.findBySiteUserAndId(siteUser,id)
-                .orElseThrow(()->new DataNotFoundException("해당 데이터가 존재하지 않습니다."));
+        return insuranceRepository.findBySiteUserAndId(siteUser, id)
+                .orElseThrow(() -> new DataNotFoundException("해당 데이터가 존재하지 않습니다."));
     }
 
-    public FireInsurance getFireBySiteUser(SiteUser siteUser) {
+    public List<FireInsurance> getFireBySiteUser(SiteUser siteUser) {
         Product product = productService.getByName("화재보험");
-        List<Insurance> insuranceList = insuranceRepository.findBySiteUserAndProduct(siteUser,product);
-        Insurance insurance = new Insurance();
-        FireInsurance fireInsurance = fireInsuranceRepository.findByInsuranceAndPropertyAddressAndBuildingType(insurance,"임시","임시")
-                .orElseThrow(()->new DataNotFoundException("해당 가입내용이 존재하지 않습니다."));
-        return fireInsurance;
+        List<Insurance> insuranceList = insuranceRepository.findBySiteUserAndProduct(siteUser, product);
+        List<FireInsurance> fireInsuranceList = fireInsuranceRepository.findAllByInsuranceIn(insuranceList)
+                .orElseThrow(() -> new DataNotFoundException("해당 가입내용이 존재하지 않습니다."));
+        return fireInsuranceList;
     }
 
-    public AutoInsurance getAutoBySiteUser(SiteUser siteUser) {
+    public FireInsurance getFireBySiteUserAndId(SiteUser siteUser, int id) {
+        Insurance insurance = insuranceRepository.findBySiteUserAndId(siteUser, id)
+                .orElseThrow(() -> new DataNotFoundException("해당 데이터가 존재하지 않습니다."));
+        return fireInsuranceRepository.findByInsurance(insurance)
+                .orElseThrow(() -> new DataNotFoundException("해당 데이터가 존재하지 않습니다."));
+    }
+
+    public List<AutoInsurance> getAutoBySiteUser(SiteUser siteUser) {
         Product product = productService.getByName("자동차보험");
-        List<Insurance> insuranceList = insuranceRepository.findBySiteUserAndProduct(siteUser,product);
-        Insurance insurance = new Insurance();
-        AutoInsurance autoInsurance = autoInsuranceRepository.findByInsuranceAndVehicleNumber(insurance,"임시")
-                .orElseThrow(()->new DataNotFoundException("해당 가입내용이 존재하지 않습니다."));
-        return autoInsurance;
+        List<Insurance> insuranceList = insuranceRepository.findAllBySiteUser(siteUser);
+        List<AutoInsurance> autoInsuranceList = autoInsuranceRepository.findByInsuranceIn(insuranceList)
+                .orElseThrow(() -> new DataNotFoundException("해당 가입내용이 존재하지 않습니다."));
+
+        return autoInsuranceList;
+    }
+
+    public AutoInsurance getAutoBySiteUserAndId(SiteUser siteUser, Integer id) {
+        Product product = productService.getByName("자동차보험");
+        Insurance insurance = insuranceRepository.findBySiteUserAndId(siteUser,id)
+                .orElseThrow(() -> new DataNotFoundException("해당 데이터가 존재하지 않습니다."));
+        return autoInsuranceRepository.findByInsurance(insurance)
+                .orElseThrow(() -> new DataNotFoundException("해당 데이터가 존재하지 않습니다."));
     }
 
     public HealthInsurance getHealthBySiteUser(SiteUser siteUser) {
         Product product = productService.getByName("건강보험");
-        List<Insurance> insuranceList = insuranceRepository.findBySiteUserAndProduct(siteUser,product);
+        List<Insurance> insuranceList = insuranceRepository.findBySiteUserAndProduct(siteUser, product);
         Insurance insurance = new Insurance();
         HealthInsurance healthInsurance = healthInsuranceRepository.findByInsurance(insurance)
-                .orElseThrow(()->new DataNotFoundException("해당 가입내용이 존재하지 않습니다."));
+                .orElseThrow(() -> new DataNotFoundException("해당 가입내용이 존재하지 않습니다."));
         return healthInsurance;
     }
 
@@ -69,48 +83,51 @@ public class InsuranceService {
     }
 
     public RenewableInsurance getRenewableBySiteUserAndId(SiteUser siteUser, Integer id) {
-        return renewableInsuranceRepository.findBySiteUserAndId(siteUser,id);
+        return renewableInsuranceRepository.findBySiteUserAndId(siteUser, id);
     }
 
-    private Insurance create(SiteUser siteUser, InsuranceJoinDTO insuranceJoinDTO,String type)
-    {
+    private Insurance create(SiteUser siteUser, InsuranceJoinDTO insuranceJoinDTO, String type) {
         UserInfo userInfo = userInfoService.getBySiteUser(siteUser);
         int age = Period.between(userInfo.getBirthDay(), LocalDate.now()).getYears();
         int riskScore = 0;
         String rank = "";
-        switch (type){
+        switch (type) {
             case "건강보험":
-                riskScore = calculateHealthRiskScore((HealthJoinDTO)insuranceJoinDTO,age);
+                riskScore = calculateHealthRiskScore((HealthJoinDTO) insuranceJoinDTO, age);
                 rank = getCoveragePlan(riskScore);
                 break;
             case "자동차보험":
-                riskScore = calculateAutoRiskScore((AutoJoinDTO)insuranceJoinDTO,age);
+                riskScore = calculateAutoRiskScore((AutoJoinDTO) insuranceJoinDTO, age);
                 rank = getCoveragePlan(riskScore);
                 break;
             case "화재보험":
-                riskScore = calculateFireRiskScore((FireJoinDTO)insuranceJoinDTO);
+                riskScore = calculateFireRiskScore((FireJoinDTO) insuranceJoinDTO);
                 rank = getCoveragePlan(riskScore);
                 break;
         }
         Product product = productService.getByName(type);
         ProductPrice productPrice = productPriceService.getByProduct(product);
-        RiskRank riskRank = riskRankService.getByNameAndProduct(rank,product);
+        RiskRank riskRank = riskRankService.getByNameAndProduct(rank, product);
         int price = (int) (riskRank.getPrice_rate() * productPrice.getPrice());
         String bank = insuranceJoinDTO.getBank();
         String bankAccount = insuranceJoinDTO.getAccount();
-        LocalDateTime startDate = LocalDateTime.now();
-        LocalDateTime endDate = startDate.plusYears(insuranceJoinDTO.getDuration());
+        LocalDate startDate = LocalDate.now().plusDays(1);
+        LocalDate endDate = startDate.plusYears(insuranceJoinDTO.getDuration());
 
-        Insurance insurance = new Insurance(siteUser, product, riskScore, riskRank, price, bank, bankAccount, startDate, endDate);
+        Insurance insurance = new Insurance(siteUser, product, riskScore, riskRank, price, bank, bankAccount, startDate, endDate, "active");
 
         return insuranceRepository.save(insurance);
     }
 
+    public Insurance cancel(Insurance insurance) {
+        insurance.setStatus("cancelled");
+        return insuranceRepository.save(insurance);
+    }
 
 
     @Async
     public void createHealth(SiteUser siteUser, HealthJoinDTO healthJoinDTO) {
-        Insurance insurance = create(siteUser,healthJoinDTO,"건강보험");
+        Insurance insurance = create(siteUser, healthJoinDTO, "건강보험");
 
         HealthInsurance healthInsurance = new HealthInsurance();
         healthInsurance.setInsurance(insurance);
@@ -121,7 +138,7 @@ public class InsuranceService {
 
     @Async
     public void createAuto(SiteUser siteUser, AutoJoinDTO autoJoinDTO) {
-        Insurance insurance = create(siteUser,autoJoinDTO,"자동차보험");
+        Insurance insurance = create(siteUser, autoJoinDTO, "자동차보험");
 
         AutoInsurance autoInsurance = new AutoInsurance();
         autoInsurance.setInsurance(insurance);
@@ -137,7 +154,7 @@ public class InsuranceService {
 
     @Async
     public void createFire(SiteUser siteUser, FireJoinDTO fireJoinDTO) {
-        Insurance insurance = create(siteUser,fireJoinDTO,"화재보험");
+        Insurance insurance = create(siteUser, fireJoinDTO, "화재보험");
 
         FireInsurance fireInsurance = new FireInsurance();
         fireInsurance.setInsurance(insurance);
@@ -152,7 +169,7 @@ public class InsuranceService {
     private int calculateHealthRiskScore(HealthJoinDTO healthJoinDTO, int age) {
         int riskScore = 0;
 
-        if (age>50){
+        if (age > 50) {
             riskScore += 10;
         }
 
@@ -189,6 +206,7 @@ public class InsuranceService {
         return Math.min(Math.max(riskScore, 0), 100);
         // 점수가 음수가 되지 않도록 보정
     }
+
     private int calculateFireRiskScore(FireJoinDTO fireJoinDTO) {
         int riskScore = 0;
         int currentYear = LocalDate.now().getYear();
@@ -222,6 +240,7 @@ public class InsuranceService {
 
         return Math.min(Math.max(riskScore, 0), 100); // 점수 0~100으로 제한
     }
+
     private int calculateAutoRiskScore(AutoJoinDTO autoJoinDTO, int age) {
         int riskScore = 0;
         int currentYear = LocalDate.now().getYear();
@@ -271,6 +290,7 @@ public class InsuranceService {
 
         return Math.min(Math.max(riskScore, 0), 130); // 점수 0~130으로 제한
     }
+
     private String getCoveragePlan(int riskScore) {
         if (riskScore >= 0 && riskScore <= 30) {
             return "Full Coverage";
@@ -282,10 +302,12 @@ public class InsuranceService {
             return "Emergency Only";
         }
     }
-
-
-
 }
+
+
+
+
+
 
 
 

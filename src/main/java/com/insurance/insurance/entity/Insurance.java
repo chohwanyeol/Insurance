@@ -7,7 +7,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -28,17 +30,18 @@ public class Insurance {
     private RiskRank riskRank;
 
     @OneToMany
-    private Transaction transaction;
+    private List<Transaction> transaction;
 
     private Integer riskScore;
     private Integer price;
     private String bank;
     private String bankAccount;
-    private LocalDateTime startDate;
-    private LocalDateTime endDate;
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private String status;       //active,cancelled,expired
 
     public Insurance(SiteUser siteUser, Product product, Integer riskScore, RiskRank riskRank,
-                      Integer price, String bank, String bankAccount, LocalDateTime startDate, LocalDateTime endDate) {
+                      Integer price, String bank, String bankAccount, LocalDate startDate, LocalDate endDate, String status) {
         this.siteUser = siteUser;
         this.product = product;
         this.riskScore = riskScore;
@@ -48,6 +51,7 @@ public class Insurance {
         this.bankAccount = bankAccount;
         this.startDate = startDate;
         this.endDate = endDate;
+        this.status = status;
     }
 
 }

@@ -15,7 +15,7 @@ public class FireInsurance {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne
+    @OneToOne
     private Insurance insurance;
 
     private String propertyAddress;

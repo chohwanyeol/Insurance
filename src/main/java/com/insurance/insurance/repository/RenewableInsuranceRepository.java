@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface RenewableInsuranceRepository extends JpaRepository<RequestRepository,Integer> {
+public interface RenewableInsuranceRepository extends JpaRepository<RenewableInsurance,Integer> {
     List<RenewableInsurance> findBySiteUser(SiteUser siteUser);
 
     RenewableInsurance findBySiteUserAndId(SiteUser siteUser, Integer id);

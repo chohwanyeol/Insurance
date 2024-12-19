@@ -45,6 +45,15 @@ public class MyPageController {
         return ResponseEntity.ok(insurance);
     }
 
+    //보험해지
+    @GetMapping("/insurance/{id}/cancel")
+    public ResponseEntity<?> myInsuranceCancel(@PathVariable("id") Integer id, @AuthenticationPrincipal UserDetails userDetails){
+        SiteUser siteUser = userService.getByUsername(userDetails.getUsername());
+        Insurance insurance = insuranceService.getBySiteUserAndId(siteUser,id);
+        insurance = insuranceService.cancel(insurance);
+        return ResponseEntity.ok(insurance);
+    }
+
 
 
     //청구내용

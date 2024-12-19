@@ -22,16 +22,17 @@ public class Request {
 
     @ManyToOne
     private Insurance insurance;
-    private String claimType;
+    private String type;
     private String content;
     private Integer price;
     private LocalDateTime request_date;
     private LocalDateTime payment_date;
     private String status;
+    private String description;
 
     public Request(Insurance insurance, String claimType, String content, Integer price, LocalDateTime request_date, String status) {
         this.insurance = insurance;
-        this.claimType = claimType;
+        this.type = claimType;
         this.content = content;
         this.price = price;
         this.request_date = request_date;

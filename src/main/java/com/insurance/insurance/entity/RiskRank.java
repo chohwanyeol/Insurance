@@ -16,6 +16,8 @@ public class RiskRank {
     private Integer id;
 
     private String name;
+
+    @ManyToOne
     private Product product;
 
     private Integer deductible_rate;
