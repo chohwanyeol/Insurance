@@ -24,4 +24,14 @@ public class RiskRank {
     private Integer coverage_limit;
     private String description;
     private Double price_rate;
+
+    public RiskRank(String name, Product product, Integer deductible_rate, Integer coverage_limit,
+                    String description, Double price_rate){
+        this.name = name;
+        this.product = product;
+        this.deductible_rate = deductible_rate;
+        this.coverage_limit = coverage_limit;
+        this.description = description;
+        this.price_rate = price_rate;
+    }
 }

@@ -1,6 +1,7 @@
 package com.insurance.insurance.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -25,4 +26,10 @@ public class Product {
     private LocalDate create_date;
 
     private LocalDate update_date;
+
+    public Product(String name, String description, LocalDate create_date){
+        this.name = name;
+        this.description = description;
+        this.create_date = create_date;
+    }
 }
