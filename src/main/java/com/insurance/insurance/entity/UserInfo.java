@@ -17,12 +17,14 @@ public class UserInfo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne
-    private SiteUser siteUser;
-
     private String name;
 
     private LocalDate birthDay;
+
+    @Column(unique = true)
+    private String email;
+
+    private String location;
 
     private LocalDate create_date;
 

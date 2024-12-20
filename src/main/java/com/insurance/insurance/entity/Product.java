@@ -19,17 +19,20 @@ public class Product {
     private Integer id;
 
     @Column(unique = true)
-    private String name;
+    private String name;        //상품이름
 
-    private String description;
+    private String description;     //설명
+
+    private Integer price;
 
     private LocalDate create_date;
 
     private LocalDate update_date;
 
-    public Product(String name, String description, LocalDate create_date){
+    public Product(String name, String description, Integer price,LocalDate create_date){
         this.name = name;
         this.description = description;
+        this.price = price;
         this.create_date = create_date;
     }
 }

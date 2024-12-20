@@ -11,13 +11,8 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @NoArgsConstructor
-public class AutoInsurance {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
 
-    @OneToOne
-    private Insurance insurance;
+public class AutoInsurance extends Insurance{
 
     private String vehicleNumber;    // 차량 번호
     private String vehicleModel;     // 차량 모델

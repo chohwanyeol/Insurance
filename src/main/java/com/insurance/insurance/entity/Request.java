@@ -22,13 +22,13 @@ public class Request {
 
     @ManyToOne
     private Insurance insurance;
-    private String type;
-    private String content;
-    private Integer price;
-    private LocalDateTime request_date;
-    private LocalDateTime payment_date;
-    private String status;
-    private String description;
+    private String type;        //요청타입
+    private String content;     //요청내용
+    private Integer price;      //비용
+    private LocalDateTime request_date;     //요청일
+    private LocalDateTime payment_date;     //지급일
+    private String status;     //[note: "pending, approved, rejected"] //상태
+    private String description;     //설명
 
     public Request(Insurance insurance, String claimType, String content, Integer price, LocalDateTime request_date, String status) {
         this.insurance = insurance;

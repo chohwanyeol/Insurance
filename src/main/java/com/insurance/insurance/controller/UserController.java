@@ -57,8 +57,12 @@ public class UserController {
         if (signUpDTO.passwordMatching()) {
             return ResponseUtil.createErrorResponse(HttpStatus.BAD_REQUEST,"비밀번호가 일치하지 않습니다.");
         }
-        SiteUser siteUser = userService.createByDTO(signUpDTO);
         UserInfo userInfo = userInfoService.createUserInfoByDTO(signUpDTO);
+        SiteUser siteUser = userService.createByDTO(signUpDTO,userInfo);
+
         return ResponseUtil.createSuccessResponse("message","회원가입성공");
     }
+
+
+
 }

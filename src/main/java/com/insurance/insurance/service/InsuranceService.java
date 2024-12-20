@@ -25,7 +25,7 @@ public class InsuranceService {
     private final ProductService productService;
     private final UserInfoService userInfoService;
     private final RiskRankService riskRankService;
-    private final ProductPriceService productPriceService;
+
 
 
     public List<Insurance> getBySiteUser(SiteUser siteUser) {
@@ -38,42 +38,31 @@ public class InsuranceService {
     }
 
     public List<FireInsurance> getFireBySiteUser(SiteUser siteUser) {
-        Product product = productService.getByName("화재보험");
-        List<Insurance> insuranceList = insuranceRepository.findBySiteUserAndProduct(siteUser, product);
-        List<FireInsurance> fireInsuranceList = fireInsuranceRepository.findAllByInsuranceIn(insuranceList)
+        List<FireInsurance> fireInsuranceList = fireInsuranceRepository.findAllBySiteUser(siteUser)
                 .orElseThrow(() -> new DataNotFoundException("해당 가입내용이 존재하지 않습니다."));
         return fireInsuranceList;
     }
 
     public FireInsurance getFireBySiteUserAndId(SiteUser siteUser, int id) {
-        Insurance insurance = insuranceRepository.findBySiteUserAndId(siteUser, id)
-                .orElseThrow(() -> new DataNotFoundException("해당 데이터가 존재하지 않습니다."));
-        return fireInsuranceRepository.findByInsurance(insurance)
+        return fireInsuranceRepository.findBySiteUserAndId(siteUser,id)
                 .orElseThrow(() -> new DataNotFoundException("해당 데이터가 존재하지 않습니다."));
     }
 
     public List<AutoInsurance> getAutoBySiteUser(SiteUser siteUser) {
         Product product = productService.getByName("자동차보험");
-        List<Insurance> insuranceList = insuranceRepository.findAllBySiteUser(siteUser);
-        List<AutoInsurance> autoInsuranceList = autoInsuranceRepository.findByInsuranceIn(insuranceList)
+        List<AutoInsurance> autoInsuranceList = autoInsuranceRepository.findAllBySiteUser(siteUser)
                 .orElseThrow(() -> new DataNotFoundException("해당 가입내용이 존재하지 않습니다."));
 
         return autoInsuranceList;
     }
 
     public AutoInsurance getAutoBySiteUserAndId(SiteUser siteUser, Integer id) {
-        Product product = productService.getByName("자동차보험");
-        Insurance insurance = insuranceRepository.findBySiteUserAndId(siteUser,id)
-                .orElseThrow(() -> new DataNotFoundException("해당 데이터가 존재하지 않습니다."));
-        return autoInsuranceRepository.findByInsurance(insurance)
+        return autoInsuranceRepository.findBySiteUserAndId(siteUser,id)
                 .orElseThrow(() -> new DataNotFoundException("해당 데이터가 존재하지 않습니다."));
     }
 
     public HealthInsurance getHealthBySiteUser(SiteUser siteUser) {
-        Product product = productService.getByName("건강보험");
-        List<Insurance> insuranceList = insuranceRepository.findBySiteUserAndProduct(siteUser, product);
-        Insurance insurance = new Insurance();
-        HealthInsurance healthInsurance = healthInsuranceRepository.findByInsurance(insurance)
+        HealthInsurance healthInsurance = healthInsuranceRepository.findBySiteUser(siteUser)
                 .orElseThrow(() -> new DataNotFoundException("해당 가입내용이 존재하지 않습니다."));
         return healthInsurance;
     }
@@ -86,9 +75,10 @@ public class InsuranceService {
         return renewableInsuranceRepository.findBySiteUserAndId(siteUser, id);
     }
 
-    private Insurance create(SiteUser siteUser, InsuranceJoinDTO insuranceJoinDTO, String type) {
-        UserInfo userInfo = userInfoService.getBySiteUser(siteUser);
+    private <T extends Insurance> T create(SiteUser siteUser, InsuranceJoinDTO insuranceJoinDTO, String type, T insurance) {
+        UserInfo userInfo = siteUser.getUserInfo();
         int age = Period.between(userInfo.getBirthDay(), LocalDate.now()).getYears();
+
         int riskScore = 0;
         String rank = "";
         switch (type) {
@@ -105,16 +95,26 @@ public class InsuranceService {
                 rank = getCoveragePlan(riskScore);
                 break;
         }
+
         Product product = productService.getByName(type);
-        ProductPrice productPrice = productPriceService.getByProduct(product);
         RiskRank riskRank = riskRankService.getByNameAndProduct(rank, product);
-        int price = (int) (riskRank.getPrice_rate() * productPrice.getPrice());
+
+        int price = (int) (riskRank.getPrice_rate() * product.getPrice());
         String bank = insuranceJoinDTO.getBank();
         String bankAccount = insuranceJoinDTO.getAccount();
         LocalDate startDate = LocalDate.now().plusDays(1);
         LocalDate endDate = startDate.plusYears(insuranceJoinDTO.getDuration());
 
-        Insurance insurance = new Insurance(siteUser, product, riskScore, riskRank, price, bank, bankAccount, startDate, endDate, "active");
+        // 부모 클래스 필드 설정
+        insurance.setSiteUser(siteUser);
+        insurance.setProduct(product);
+        insurance.setRiskRank(riskRank);
+        insurance.setPrice(price);
+        insurance.setStatus("pending");
+        insurance.setStartDate(startDate);
+        insurance.setEndDate(endDate);
+        insurance.setBank(bank);
+        insurance.setBankAccount(bankAccount);
 
         return insuranceRepository.save(insurance);
     }
@@ -124,45 +124,55 @@ public class InsuranceService {
         return insuranceRepository.save(insurance);
     }
 
-
     @Async
-    public void createHealth(SiteUser siteUser, HealthJoinDTO healthJoinDTO) {
-        Insurance insurance = create(siteUser, healthJoinDTO, "건강보험");
-
+    public HealthInsurance createHealth(SiteUser siteUser, HealthJoinDTO healthJoinDTO) {
         HealthInsurance healthInsurance = new HealthInsurance();
-        healthInsurance.setInsurance(insurance);
+        healthInsurance = create(siteUser, healthJoinDTO, "건강보험",healthInsurance);
         healthInsurance.setFamily(String.join(", ", healthJoinDTO.getFamily()));
         healthInsurance.setPreExistingConditions(String.join(", ", healthJoinDTO.getPre_existing_conditions()));
-        healthInsuranceRepository.save(healthInsurance);
+        return healthInsuranceRepository.save(healthInsurance);
     }
 
     @Async
-    public void createAuto(SiteUser siteUser, AutoJoinDTO autoJoinDTO) {
-        Insurance insurance = create(siteUser, autoJoinDTO, "자동차보험");
+    public AutoInsurance createAuto(SiteUser siteUser, AutoJoinDTO autoJoinDTO) {
 
         AutoInsurance autoInsurance = new AutoInsurance();
-        autoInsurance.setInsurance(insurance);
+        autoInsurance = create(siteUser, autoJoinDTO, "자동차보험", autoInsurance);
         autoInsurance.setVehicleNumber(autoJoinDTO.getVehicleNumber());
         autoInsurance.setVehicleModel(autoInsurance.getVehicleModel());
         autoInsurance.setVehicleYear(autoInsurance.getVehicleYear());
         autoInsurance.setDrivingExperience(autoInsurance.getDrivingExperience());
         autoInsurance.setRecentAccident(autoInsurance.getRecentAccident());
         autoInsurance.setVehicleUsage(autoInsurance.getVehicleUsage());
-        autoInsuranceRepository.save(autoInsurance);
+        return autoInsuranceRepository.save(autoInsurance);
     }
 
 
     @Async
-    public void createFire(SiteUser siteUser, FireJoinDTO fireJoinDTO) {
-        Insurance insurance = create(siteUser, fireJoinDTO, "화재보험");
-
+    public FireInsurance createFire(SiteUser siteUser, FireJoinDTO fireJoinDTO) {
         FireInsurance fireInsurance = new FireInsurance();
-        fireInsurance.setInsurance(insurance);
+        fireInsurance = create(siteUser, fireJoinDTO, "화재보험", fireInsurance);
         fireInsurance.setPropertyAddress(fireJoinDTO.getPropertyAddress());
         fireInsurance.setBuildingType(fireInsurance.getBuildingType());
         fireInsurance.setBuildingYear(fireJoinDTO.getBuildingYear());
         fireInsurance.setPreviousFire(fireJoinDTO.getPreviousFire());
-        fireInsuranceRepository.save(fireInsurance);
+        return fireInsuranceRepository.save(fireInsurance);
+    }
+
+
+    @Transactional
+    public void startInsurance(SiteUser siteUser, int id) {
+        Insurance insurance = insuranceRepository.findBySiteUserAndId(siteUser,id)
+                .orElseThrow(()->new DataNotFoundException("데이터가 존재하지 않습니다."));
+        insurance.setStatus("active");
+        insuranceRepository.save(insurance);
+    }
+
+    @Transactional
+    public void deleteInsurance(SiteUser siteUser, int id) {
+        Insurance insurance = insuranceRepository.findBySiteUserAndId(siteUser,id)
+                .orElseThrow(()->new DataNotFoundException("데이터가 존재하지 않습니다."));
+        insuranceRepository.delete(insurance);
     }
 
 
@@ -302,6 +312,9 @@ public class InsuranceService {
             return "Emergency Only";
         }
     }
+
+
+
 }
 
 

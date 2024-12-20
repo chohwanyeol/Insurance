@@ -29,9 +29,7 @@ public class RequestService {
 
 
     public CompletableFuture<Request> requestHealth(SiteUser siteUser, HealthRequestDTO healthRequestDTO){
-        UserInfo userInfo = userInfoRepository.findBySiteUser(siteUser).orElseThrow(
-                ()->new DataNotFoundException("해당 유저가 없습니다."));
-        //dto정보들 받아오기
+        UserInfo userInfo = siteUser.getUserInfo();
         String content = healthRequestDTO.getContent();
         int price = healthRequestDTO.getPrice();
         String receipt = "";
@@ -58,8 +56,7 @@ public class RequestService {
                 .toList(); // Stream 결과를 List로 변환
 
         HealthInsurance healthInsurance = insuranceService.getHealthBySiteUser(siteUser);
-        Insurance insurance = healthInsurance.getInsurance();
-        RiskRank riskRank = insurance.getRiskRank();
+        RiskRank riskRank = healthInsurance.getRiskRank();
         String description = riskRank.getDescription();
 
 
@@ -68,7 +65,7 @@ public class RequestService {
         price = (int)Math.min(price * (deductible_rate/100), coverage_limit);
         //request 생성
         LocalDateTime request_date = LocalDateTime.now();
-        Request request = new Request(insurance,claimType,content,price,request_date,"확인중");
+        Request request = new Request(healthInsurance,claimType,content,price,request_date,"pending");
         request= requestRepository.save(request);
 
 
@@ -83,10 +80,10 @@ public class RequestService {
             //throw
         }
         if (responseMessage.equals("true")){
-            request.setStatus("승인완료");
+            request.setStatus("approved");
         }
         else{
-            request.setStatus("거절");
+            request.setStatus("rejected");
             request.setDescription(responseMessage);
         }
         request = requestRepository.save(request);
@@ -94,8 +91,7 @@ public class RequestService {
     }
 
     public CompletableFuture<Request> requestFire(SiteUser siteUser, FireRequestDTO fireRequestDTO, Integer id) {
-        UserInfo userInfo = userInfoRepository.findBySiteUser(siteUser).orElseThrow(
-                ()->new DataNotFoundException("해당 유저가 없습니다."));
+        UserInfo userInfo = siteUser.getUserInfo();
         //dto정보들 받아오기
         String content = fireRequestDTO.getContent();
         String date = fireRequestDTO.getDate().toString();
@@ -133,8 +129,7 @@ public class RequestService {
                 .toList(); // Stream 결과를 List로 변환
 
         FireInsurance fireInsurance = insuranceService.getFireBySiteUserAndId(siteUser,id);
-        Insurance insurance = fireInsurance.getInsurance();
-        RiskRank riskRank = insurance.getRiskRank();
+        RiskRank riskRank = fireInsurance.getRiskRank();
         String description = riskRank.getDescription();
 
 
@@ -143,7 +138,7 @@ public class RequestService {
         price = (int)Math.min(price * (deductible_rate/100), coverage_limit);
         //request 생성
         LocalDateTime request_date = LocalDateTime.now();
-        Request request = new Request(insurance,damageType,content,price,request_date,"확인중");
+        Request request = new Request(fireInsurance,damageType,content,price,request_date,"pending");
         request= requestRepository.save(request);
 
 
@@ -156,10 +151,10 @@ public class RequestService {
             //throw
         }
         if (responseMessage.equals("true")){
-            request.setStatus("승인완료");
+            request.setStatus("approved");
         }
         else{
-            request.setStatus("거절");
+            request.setStatus("rejected");
             request.setDescription(responseMessage);
         }
         request = requestRepository.save(request);
@@ -167,8 +162,7 @@ public class RequestService {
     }
 
     public CompletableFuture<Request> requestAuto(SiteUser siteUser, AutoRequestDTO autoRequestDTO, Integer id) {
-        UserInfo userInfo = userInfoRepository.findBySiteUser(siteUser).orElseThrow(
-                ()->new DataNotFoundException("해당 유저가 없습니다."));
+        UserInfo userInfo = siteUser.getUserInfo();
         //dto정보들 받아오기
         String content = autoRequestDTO.getContent();
         String date = autoRequestDTO.getDate().toString();
@@ -207,8 +201,7 @@ public class RequestService {
                 .toList(); // Stream 결과를 List로 변환
 
         AutoInsurance autoInsurance = insuranceService.getAutoBySiteUserAndId(siteUser,id);
-        Insurance insurance = autoInsurance.getInsurance();
-        RiskRank riskRank = insurance.getRiskRank();
+        RiskRank riskRank = autoInsurance.getRiskRank();
         String description = riskRank.getDescription();
 
 
@@ -217,7 +210,7 @@ public class RequestService {
         price = (int)Math.min(price * (deductible_rate/100), coverage_limit);
         //request 생성
         LocalDateTime request_date = LocalDateTime.now();
-        Request request = new Request(insurance,damageType,content,price,request_date,"확인중");
+        Request request = new Request(autoInsurance,damageType,content,price,request_date,"pending");
         request= requestRepository.save(request);
 
 
@@ -230,10 +223,10 @@ public class RequestService {
             //throw
         }
         if (responseMessage.equals("true")){
-            request.setStatus("승인완료");
+            request.setStatus("approved");
         }
         else{
-            request.setStatus("거절");
+            request.setStatus("rejected");
             request.setDescription(responseMessage);
         }
         request = requestRepository.save(request);

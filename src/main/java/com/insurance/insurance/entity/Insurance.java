@@ -15,6 +15,7 @@ import java.util.List;
 @Setter
 @Entity
 @NoArgsConstructor
+@Inheritance(strategy = InheritanceType.JOINED)
 public class Insurance {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,21 +25,21 @@ public class Insurance {
     private SiteUser siteUser;
 
     @ManyToOne
-    private Product product;
+    private Product product;        //상품정보
 
     @ManyToOne
-    private RiskRank riskRank;
+    private RiskRank riskRank;      //리스크등급
 
     @OneToMany
-    private List<Transaction> transaction;
+    private List<Transaction> transaction;      //지급내역
 
-    private Integer riskScore;
-    private Integer price;
-    private String bank;
-    private String bankAccount;
-    private LocalDate startDate;
-    private LocalDate endDate;
-    private String status;       //active,cancelled,expired
+    private Integer riskScore;      //리스크점수
+    private Integer price;      //점수
+    private String bank;        //은행
+    private String bankAccount;     //계좌
+    private LocalDate startDate;    //시작일
+    private LocalDate endDate;      //만료일
+    private String status;       //active,expired,pending
 
     public Insurance(SiteUser siteUser, Product product, Integer riskScore, RiskRank riskRank,
                       Integer price, String bank, String bankAccount, LocalDate startDate, LocalDate endDate, String status) {

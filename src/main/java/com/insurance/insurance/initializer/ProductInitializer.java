@@ -1,9 +1,7 @@
 package com.insurance.insurance.initializer;
 
 import com.insurance.insurance.entity.Product;
-import com.insurance.insurance.entity.ProductPrice;
 import com.insurance.insurance.entity.RiskRank;
-import com.insurance.insurance.repository.ProductPriceRepository;
 import com.insurance.insurance.repository.ProductRepository;
 import com.insurance.insurance.repository.RiskRankRepository;
 import jakarta.annotation.PostConstruct;
@@ -14,13 +12,11 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.util.List;
 
-
 @RequiredArgsConstructor
 @Component
 public class ProductInitializer {
 
     private final ProductRepository productRepository;
-    private final ProductPriceRepository productPriceRepository;
     private final RiskRankRepository riskRankRepository;
 
     @PostConstruct
@@ -33,6 +29,7 @@ public class ProductInitializer {
                             "출퇴근, 장거리 운전, 영업용 차량 등 다양한 차량이 가입할 수 있습니다. " +
                             "보장 항목으로는 대인 보상, 대물 보상, 차량 손상 보상이 포함됩니다. " +
                             "단, 음주운전이나 무면허 운전 사고는 보장 대상에서 제외됩니다.",
+                    100000,
                     LocalDate.now());
 
             Product healthInsurance = new Product("건강보험",
@@ -40,6 +37,7 @@ public class ProductInitializer {
                             "특히 암, 심혈관 질환, 뇌졸중 등 중증 질환에 대한 진단비와 치료비를 포함하여 보장합니다. " +
                             "주요 보장 항목은 입원비, 수술비, 약제비이며, 고객의 연령, 병력, 생활 습관을 고려한 보험료가 책정됩니다. " +
                             "정기적인 건강 관리를 위한 필수적인 보험입니다.",
+                    120000,
                     LocalDate.now());
 
             Product fireInsurance = new Product("화재보험",
@@ -48,29 +46,14 @@ public class ProductInitializer {
                             "화재로 인해 발생한 대체 거주 비용과 구조 비용도 지원합니다. " +
                             "보장 항목으로는 주택 보상, 상업시설 보상, 가재도구 보상이 포함됩니다. " +
                             "안심할 수 있는 생활을 위해 필수적인 보험입니다.",
+                    100000,
                     LocalDate.now());
 
             carInsurance = productRepository.save(carInsurance);
             healthInsurance = productRepository.save(healthInsurance);
             fireInsurance = productRepository.save(fireInsurance);
 
-            // 상품가격 추가
-            ProductPrice carInsurancePrice = new ProductPrice();
-            carInsurancePrice.setProduct(carInsurance);
-            carInsurancePrice.setPrice(100000);
 
-            ProductPrice healthInsurancePrice = new ProductPrice();
-            healthInsurancePrice.setProduct(healthInsurance);
-            healthInsurancePrice.setPrice(120000);
-
-            ProductPrice fireInsurancePrice = new ProductPrice();
-            fireInsurancePrice.setProduct(fireInsurance);
-            fireInsurancePrice.setPrice(100000);
-
-            productPriceRepository.saveAll(List.of(carInsurancePrice, healthInsurancePrice, fireInsurancePrice));
-
-
-            //가격 추가
 
             RiskRank autoFull = new RiskRank("Full Coverage", carInsurance, 80, 120,
                     "대인, 대물, 자손 보장을 포함하며, 차량 수리 비용과 사고로 인한 대체 교통비를 모두 지원합니다.", 100.0);

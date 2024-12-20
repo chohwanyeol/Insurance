@@ -20,13 +20,12 @@ public class SiteUser {
 
     private String password;
 
-    @Column(unique = true)
-    private String email;
+    @OneToOne(cascade = CascadeType.REMOVE)
+    UserInfo userInfo;
 
-    public SiteUser(String username, String password, String email){
+    public SiteUser(String username, String password){
         this.username = username;
         this.password = password;
-        this.email = email;
     }
 
 }

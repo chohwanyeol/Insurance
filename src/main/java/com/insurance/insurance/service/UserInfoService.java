@@ -6,6 +6,7 @@ import com.insurance.insurance.entity.UserInfo;
 import com.insurance.insurance.exception.DataNotFoundException;
 import com.insurance.insurance.repository.UserInfoRepository;
 import com.insurance.insurance.repository.UserRepository;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -13,31 +14,30 @@ import java.sql.Time;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+
+
 @RequiredArgsConstructor
 @Service
 public class UserInfoService {
     private final UserRepository userRepository;
     private final UserInfoRepository userInfoRepository;
     public UserInfo createUserInfoByDTO(SignUpDTO signUpDTO) {
-        String username = signUpDTO.getUsername();
         String name = signUpDTO.getName();
         LocalDate birthday = signUpDTO.getBirthDay();
-        return create(username,name,birthday);
+        String email = signUpDTO.getEmail();
+        String location = signUpDTO.getLocation().trim() + " " + signUpDTO.getDetailLocation().trim();
+        return create(name,birthday,email,location);
     }
 
-    public UserInfo create(String username, String name, LocalDate birthday){
+    public UserInfo create(String name, LocalDate birthday,String email, String location){
         UserInfo userInfo = new UserInfo();
         userInfo.setName(name);
         userInfo.setBirthDay(birthday);
-        userInfo.setSiteUser(userRepository.findByUsername(username).orElse(null));
+        userInfo.setEmail(email);
+        userInfo.setLocation(location);
         userInfo.setCreate_date(LocalDate.now());
         userInfo.setUpdate_date(LocalDate.now());
         return userInfoRepository.save(userInfo);
     }
 
-    UserInfo getBySiteUser(SiteUser siteUser) {
-        return userInfoRepository.findBySiteUser(siteUser).orElseThrow(
-                ()->new DataNotFoundException("데이터가 존재하지 않습니다.")
-        );
-    }
 }

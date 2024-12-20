@@ -1,20 +1,14 @@
 package com.insurance.insurance.controller;
 
-import com.insurance.insurance.dto.InsuranceJoinDTO;
-import com.insurance.insurance.entity.AutoInsurance;
-import com.insurance.insurance.entity.FireInsurance;
-import com.insurance.insurance.entity.HealthInsurance;
-import com.insurance.insurance.entity.SiteUser;
+import com.insurance.insurance.dto.*;
+import com.insurance.insurance.entity.*;
 import com.insurance.insurance.exception.DataNotFoundException;
 import com.insurance.insurance.service.InsuranceService;
+import com.insurance.insurance.service.ProductService;
 import com.insurance.insurance.service.UserService;
 import com.insurance.insurance.util.ResponseUtil;
 import lombok.RequiredArgsConstructor;
-import com.insurance.insurance.dto.AutoJoinDTO;
-import com.insurance.insurance.dto.FireJoinDTO;
-import com.insurance.insurance.dto.HealthJoinDTO;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,7 +17,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @Controller
 @RequestMapping("/join")
@@ -32,6 +25,21 @@ public class JoinController {
 
     private final InsuranceService insuranceService; // 보험 관련 서비스
     private final UserService userService; // 사용자 관련 서비스
+    private final ProductService productService;
+
+    @PreAuthorize("isAuthenticated")
+    @GetMapping("")
+    public ResponseEntity<?> getProducts(@AuthenticationPrincipal UserDetails userDetails){
+        List<Product> productList = productService.getAll();
+        List<ProductDTO> productDTOList = productList.stream()
+                .map(product -> {
+                            ProductDTO productDTO = new ProductDTO();
+                            productDTO.EntityToDTO(product);
+                            return productDTO;
+                        }
+                ).toList();
+        return ResponseEntity.ok(productDTOList);
+    }
 
     @PreAuthorize("isAuthenticated")
     @GetMapping("/health")
@@ -53,8 +61,10 @@ public class JoinController {
         /*   ai에게 가입 가능 판별 및 리스크 책정 후 메일로 결과 발송?  */
         String username = userDetails.getUsername(); // 인증된 사용자 이름 가져오기
         SiteUser siteUser = userService.getByUsername(username);
-        insuranceService.createHealth(siteUser,healthJoinDTO);
-        return ResponseUtil.createSuccessResponse("message","가입 신청 되었습니다.");
+        HealthInsurance healthInsurance = insuranceService.createHealth(siteUser,healthJoinDTO);
+        InsuranceDTO insuranceDTO = new InsuranceDTO();
+        insuranceDTO.EntityToDTO(healthInsurance);
+        return ResponseEntity.ok(insuranceDTO);
     }
 
 
@@ -78,9 +88,12 @@ public class JoinController {
         /*   ai에게 가입 가능 판별 및 리스크 책정 후 메일로 결과 발송?  */
         String username = userDetails.getUsername(); // 인증된 사용자 이름 가져오기
         SiteUser siteUser = userService.getByUsername(username);
-        insuranceService.createAuto(siteUser,autoJoinDTO);
-        return ResponseUtil.createSuccessResponse("message","가입 신청 되었습니다.");
+        AutoInsurance autoInsurance = insuranceService.createAuto(siteUser,autoJoinDTO);
+        InsuranceDTO insuranceDTO = new InsuranceDTO();
+        insuranceDTO.EntityToDTO(autoInsurance);
+        return ResponseEntity.ok(insuranceDTO);
     }
+
 
     @PreAuthorize("isAuthenticated")
     @GetMapping("/fire")
@@ -99,9 +112,34 @@ public class JoinController {
     @PreAuthorize("isAuthenticated")
     @PostMapping("/fire")
     public ResponseEntity<?> postFireProduct(@AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody FireJoinDTO fireJoinDTO){
+        String username = userDetails.getUsername(); // 인증된 사용자 이름 가져오기
+        SiteUser siteUser = userService.getByUsername(username);
+        FireInsurance fireInsurance = insuranceService.createFire(siteUser,fireJoinDTO);
+        InsuranceDTO insuranceDTO = new InsuranceDTO();
+        insuranceDTO.EntityToDTO(fireInsurance);
+        return ResponseEntity.ok(insuranceDTO);
+    }
+
+    @PreAuthorize("isAuthenticated")
+    @PostMapping("/{id}/ok")
+    public ResponseEntity<?> okFireProduct(@PathVariable("id")int id, @AuthenticationPrincipal UserDetails userDetails){
         // 비동기 처리 - 화재보험 가입 요청 처리
         /*   ai에게 가입 가능 판별 및 리스크 책정  */
         String username = userDetails.getUsername(); // 인증된 사용자 이름 가져오기
-        return ResponseUtil.createSuccessResponse("message","가입 신청 되었습니다."); // 신청 완료 응답
+        SiteUser siteUser = userService.getByUsername(username);
+        insuranceService.startInsurance(siteUser,id);
+        return ResponseUtil.createSuccessResponse("message","ok");
     }
+
+    @PreAuthorize("isAuthenticated")
+    @PostMapping("/{id}/no")
+    public ResponseEntity<?> noFireProduct(@PathVariable("id")int id, @AuthenticationPrincipal UserDetails userDetails){
+        // 비동기 처리 - 화재보험 가입 요청 처리
+        /*   ai에게 가입 가능 판별 및 리스크 책정  */
+        String username = userDetails.getUsername(); // 인증된 사용자 이름 가져오기
+        SiteUser siteUser = userService.getByUsername(username);
+        insuranceService.deleteInsurance(siteUser,id);
+        return ResponseUtil.createSuccessResponse("message","ok");
+    }
+
 }

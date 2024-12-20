@@ -24,11 +24,11 @@ public class Transaction {
     @ManyToOne
     private Insurance insurance;
 
-    private Integer price;
+    private Integer price;      //금액
 
     private LocalDateTime dateTime;
 
-    private String status;
+    private String status;      //[note: "pending, approved, rejected"]
 
     public Transaction(SiteUser siteUser, Insurance insurance, Integer price, LocalDateTime dateTime, String status) {
     }

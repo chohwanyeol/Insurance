@@ -1,6 +1,9 @@
 package com.insurance.insurance.controller;
 
 
+import com.insurance.insurance.dto.InsuranceDTO;
+import com.insurance.insurance.dto.RequestDTO;
+import com.insurance.insurance.dto.TransactionDTO;
 import com.insurance.insurance.entity.*;
 import com.insurance.insurance.service.InsuranceService;
 import com.insurance.insurance.service.RequestService;
@@ -18,6 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+import static java.util.stream.Collectors.toList;
+
 @RestController
 @RequestMapping("/mypage")
 @RequiredArgsConstructor
@@ -34,7 +39,13 @@ public class MyPageController {
     public ResponseEntity<?> myInsurance(@AuthenticationPrincipal UserDetails userDetails){
         SiteUser siteUser = userService.getByUsername(userDetails.getUsername());
         List<Insurance> insuranceList = insuranceService.getBySiteUser(siteUser);
-        return ResponseEntity.ok(insuranceList);
+        List<InsuranceDTO> insuranceDTOList = insuranceList.stream()
+                .map(insurance -> {
+                            InsuranceDTO insuranceDTO = new InsuranceDTO();
+                            insuranceDTO.EntityToDTO(insurance);
+                            return insuranceDTO;
+                }).toList();
+        return ResponseEntity.ok(insuranceDTOList);
     }
 
     //가입된보험
@@ -42,7 +53,9 @@ public class MyPageController {
     public ResponseEntity<?> myInsuranceDetail(@PathVariable("id") Integer id, @AuthenticationPrincipal UserDetails userDetails){
         SiteUser siteUser = userService.getByUsername(userDetails.getUsername());
         Insurance insurance = insuranceService.getBySiteUserAndId(siteUser,id);
-        return ResponseEntity.ok(insurance);
+        InsuranceDTO insuranceDTO = new InsuranceDTO();
+        insuranceDTO.EntityToDTO(insurance);
+        return ResponseEntity.ok(insuranceDTO);
     }
 
     //보험해지
@@ -51,7 +64,9 @@ public class MyPageController {
         SiteUser siteUser = userService.getByUsername(userDetails.getUsername());
         Insurance insurance = insuranceService.getBySiteUserAndId(siteUser,id);
         insurance = insuranceService.cancel(insurance);
-        return ResponseEntity.ok(insurance);
+        InsuranceDTO insuranceDTO = new InsuranceDTO();
+        insuranceDTO.EntityToDTO(insurance);
+        return ResponseEntity.ok(insuranceDTO);
     }
 
 
@@ -61,7 +76,13 @@ public class MyPageController {
     public ResponseEntity<?> myRequest(@AuthenticationPrincipal UserDetails userDetails){
         SiteUser siteUser = userService.getByUsername(userDetails.getUsername());
         List<Request> requestList = requestService.getBySiteUser(siteUser);
-        return ResponseEntity.ok(requestList);
+        List<RequestDTO> requestDTOList = requestList.stream()
+                .map(request -> {
+                    RequestDTO requestDTO = new RequestDTO();
+                    requestDTO.EntityToDTO(request);
+                    return requestDTO;
+                }).toList();
+        return ResponseEntity.ok(requestDTOList);
     }
 
     //청구내용
@@ -69,7 +90,9 @@ public class MyPageController {
     public ResponseEntity<?> myRequestDetail(@PathVariable("id") Integer id, @AuthenticationPrincipal UserDetails userDetails){
         SiteUser siteUser = userService.getByUsername(userDetails.getUsername());
         Request request = requestService.getBySiteUserAndId(siteUser,id);
-        return ResponseEntity.ok(request);
+        RequestDTO requestDTO = new RequestDTO();
+        requestDTO.EntityToDTO(request);
+        return ResponseEntity.ok(requestDTO);
     }
 
     //지급내용
@@ -77,6 +100,12 @@ public class MyPageController {
     public ResponseEntity<?> myTransaction(@AuthenticationPrincipal UserDetails userDetails){
         SiteUser siteUser = userService.getByUsername(userDetails.getUsername());
         List<Transaction> transactionList = transactionService.getBySiteUser(siteUser);
+        List<TransactionDTO> transactionDTOList =transactionList.stream()
+                .map(transaction -> {
+                    TransactionDTO transactionDTO = new TransactionDTO();
+                    transactionDTO.EntityToDTO(transaction);
+                    return transactionDTO;
+                }).toList();
         return ResponseEntity.ok(transactionList);
     }
 
@@ -85,7 +114,9 @@ public class MyPageController {
     public ResponseEntity<?> myTransactionDetail(@PathVariable("id") Integer id, @AuthenticationPrincipal UserDetails userDetails){
         SiteUser siteUser = userService.getByUsername(userDetails.getUsername());
         Transaction transaction = transactionService.getBySiteUserAndId(siteUser,id);
-        return ResponseEntity.ok(transaction);
+        TransactionDTO transactionDTO = new TransactionDTO();
+        transactionDTO.EntityToDTO(transaction);
+        return ResponseEntity.ok(transactionDTO);
     }
 
 
@@ -94,7 +125,13 @@ public class MyPageController {
     public ResponseEntity<?> renew(@AuthenticationPrincipal UserDetails userDetails){
         SiteUser siteUser = userService.getByUsername(userDetails.getUsername());
         List<RenewableInsurance> renewableInsuranceList = insuranceService.getRenewableBySiteUser(siteUser);
-        return ResponseEntity.ok(renewableInsuranceList);
+        List<InsuranceDTO> insuranceDTOList = renewableInsuranceList.stream().
+                map(renewableInsurance -> {
+                    InsuranceDTO insuranceDTO = new InsuranceDTO();
+                    insuranceDTO.EntityToDTO(renewableInsurance.getInsurance());
+                    return insuranceDTO;
+                }).toList();
+        return ResponseEntity.ok(insuranceDTOList);
     }
 
 
@@ -103,7 +140,9 @@ public class MyPageController {
     public ResponseEntity<?> renewDetail(@PathVariable("id") Integer id, @AuthenticationPrincipal UserDetails userDetails){
         SiteUser siteUser = userService.getByUsername(userDetails.getUsername());
         RenewableInsurance renewableInsurance = insuranceService.getRenewableBySiteUserAndId(siteUser,id);
-        return ResponseEntity.ok(renewableInsurance);
+        InsuranceDTO insuranceDTO = new InsuranceDTO();
+        insuranceDTO.EntityToDTO(renewableInsurance.getInsurance());
+        return ResponseEntity.ok(insuranceDTO);
     }
 
 }

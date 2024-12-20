@@ -10,10 +10,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface AutoInsuranceRepository extends JpaRepository<AutoInsurance,Integer> {
+    
+    Optional<List<AutoInsurance>> findAllBySiteUser(SiteUser siteUser);
 
-    Optional<AutoInsurance>findByInsuranceAndVehicleNumber(Insurance insurance, String vehicleNumber);
-
-    Optional<List<AutoInsurance>> findByInsuranceIn(List<Insurance> insuranceList);
-
-    Optional<AutoInsurance> findByInsurance(Insurance insurance);
+    Optional<AutoInsurance> findBySiteUserAndId(SiteUser siteUser, Integer id);
 }

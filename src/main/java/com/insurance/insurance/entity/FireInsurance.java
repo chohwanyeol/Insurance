@@ -10,19 +10,13 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class FireInsurance {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
 
-    @OneToOne
-    private Insurance insurance;
+public class FireInsurance extends Insurance{
+    private String propertyAddress;     //재산 주소
 
-    private String propertyAddress;
+    private String buildingType;        //건물 유형
 
-    private String buildingType;
+    private Integer buildingYear;       //건축 년도
 
-    private Integer buildingYear;
-
-    private Boolean previousFire;
+    private Boolean previousFire;       //이전 화재 여부
 }

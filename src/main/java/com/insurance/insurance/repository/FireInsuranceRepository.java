@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface FireInsuranceRepository extends JpaRepository<FireInsurance,Integer> {
-    Optional<FireInsurance> findByInsurance(Insurance insurance);
-    Optional<List<FireInsurance>> findAllByInsuranceIn(List<Insurance> insuranceList);
+    Optional<FireInsurance> findBySiteUserAndId(SiteUser siteUser,int id);
+
+    Optional<List<FireInsurance>> findAllBySiteUser(SiteUser siteUser);
 }

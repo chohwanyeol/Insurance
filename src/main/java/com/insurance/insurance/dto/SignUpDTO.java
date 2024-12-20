@@ -37,6 +37,12 @@ public class SignUpDTO {
     @NotNull(message = "생년월일이 필요합니다.")
     private LocalDate birthDay;
 
+    @NotNull(message = "주소 입력이 필요합니다.")
+    private String location;
+
+    @NotNull(message = "상세 주소 입력이 필요합니다.")
+    private String detailLocation;
+
     public boolean passwordMatching() {
         return password.equals(checkPassword);
     }

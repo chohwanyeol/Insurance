@@ -12,16 +12,10 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-public class HealthInsurance {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+public class HealthInsurance extends Insurance{
 
-    @OneToOne
-    private Insurance insurance;
+    private String family;      //가족력
 
-    private String family;
-
-    private String preExistingConditions;
+    private String preExistingConditions;       //이전 병력
 
 }

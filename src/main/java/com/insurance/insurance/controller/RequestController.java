@@ -1,9 +1,7 @@
 package com.insurance.insurance.controller;
 
 
-import com.insurance.insurance.dto.AutoRequestDTO;
-import com.insurance.insurance.dto.FireRequestDTO;
-import com.insurance.insurance.dto.HealthRequestDTO;
+import com.insurance.insurance.dto.*;
 import com.insurance.insurance.entity.*;
 import com.insurance.insurance.exception.DataNotFoundException;
 import com.insurance.insurance.repository.AutoInsuranceRepository;
@@ -49,8 +47,14 @@ public class RequestController {
         String username = userDetails.getUsername();
         SiteUser siteUser = userService.getByUsername(username);
         List<Insurance> insuranceList= insuranceService.getBySiteUser(siteUser);
-        List<Product> productList = insuranceList.stream().map(Insurance::getProduct).toList();
-        return ResponseEntity.ok(productList);
+        List<ProductDTO> productDTOList = insuranceList.stream()
+                .map(insurance -> {
+                    ProductDTO productDTO = new ProductDTO();
+                    productDTO.EntityToDTO(insurance.getProduct());
+                    return productDTO;
+                })
+                .toList();
+        return ResponseEntity.ok(productDTOList);
     }
 
 
@@ -63,7 +67,14 @@ public class RequestController {
         SiteUser siteUser = userService.getByUsername(username);
         try {
             List<FireInsurance> fireInsuranceList = insuranceService.getFireBySiteUser(siteUser);
-            return ResponseEntity.ok(fireInsuranceList);
+            List<FireDTO> fireDTOList = fireInsuranceList.stream()
+                    .map(fireInsurance ->{
+                        FireDTO fireDTO = new FireDTO();
+                        fireDTO.EntityToDTO(fireInsurance);
+                        return fireDTO;
+                    })
+                    .toList();
+            return ResponseEntity.ok(fireDTOList);
         }catch (DataNotFoundException e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("status",false));
         }
@@ -71,13 +82,15 @@ public class RequestController {
 
     //화재보험금 청구 페이지
     @PreAuthorize("isAuthenticated")
-    @GetMapping("/fire/{id}")
-    public ResponseEntity<?> getFireInsurances(@PathVariable("id")int id, @AuthenticationPrincipal UserDetails userDetails){
+    @GetMapping("/fire/{fireId}")
+    public ResponseEntity<?> getFireInsurances(@PathVariable("fireId")int id, @AuthenticationPrincipal UserDetails userDetails){
         String username = userDetails.getUsername();
         SiteUser siteUser = userService.getByUsername(username);
         try {
             FireInsurance fireInsurance = insuranceService.getFireBySiteUserAndId(siteUser,id);
-            return ResponseEntity.ok(fireInsurance);
+            FireDTO fireDTO = new FireDTO();
+            fireDTO.EntityToDTO(fireInsurance);
+            return ResponseEntity.ok(fireDTO);
         }catch (DataNotFoundException e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("status",false));
         }
@@ -86,8 +99,8 @@ public class RequestController {
 
     //화재보험금 청구
     @PreAuthorize("isAuthenticated")
-    @PostMapping("/fire/{id}")
-    public ResponseEntity<?> postFireInsurances(@PathVariable("id")int id,@AuthenticationPrincipal UserDetails userDetails, @Valid FireRequestDTO fireRequestDTO){
+    @PostMapping("/fire/{fireId}")
+    public ResponseEntity<?> postFireInsurances(@PathVariable("fireId")int id,@AuthenticationPrincipal UserDetails userDetails, @Valid FireRequestDTO fireRequestDTO){
         String username = userDetails.getUsername();
         SiteUser siteUser = userService.getByUsername(username);
         try {
@@ -112,7 +125,13 @@ public class RequestController {
         SiteUser siteUser = userService.getByUsername(username);
         try {
             List<AutoInsurance> autoInsuranceList = insuranceService.getAutoBySiteUser(siteUser);
-            return ResponseEntity.ok(autoInsuranceList);
+            List<AutoDTO> autoDTOList = autoInsuranceList.stream()
+                    .map(autoInsurance -> {
+                AutoDTO autoDTO = new AutoDTO();
+                autoDTO.EntityToDTO(autoInsurance);
+                return autoDTO;
+            }).toList();
+            return ResponseEntity.ok(autoDTOList);
         }catch (DataNotFoundException e){
             return ResponseUtil.createErrorResponse(HttpStatus.BAD_REQUEST,"보험이 가입되어있지 않습니다.");
         }
@@ -120,13 +139,15 @@ public class RequestController {
 
     //자동차보험금 청구 페이지
     @PreAuthorize("isAuthenticated")
-    @GetMapping("/auto/{id}")
-    public ResponseEntity<?> getAutoInsurance(@PathVariable("id")int id, @AuthenticationPrincipal UserDetails userDetails){
+    @GetMapping("/auto/{autoId}")
+    public ResponseEntity<?> getAutoInsurance(@PathVariable("autoId")int id, @AuthenticationPrincipal UserDetails userDetails){
         String username = userDetails.getUsername();
         SiteUser siteUser = userService.getByUsername(username);
         try {
             AutoInsurance autoInsurance = insuranceService.getAutoBySiteUserAndId(siteUser, id);
-            return ResponseEntity.ok(autoInsurance);
+            AutoDTO autoDTO = new AutoDTO();
+            autoDTO.EntityToDTO(autoInsurance);
+            return ResponseEntity.ok(autoDTO);
         }catch (DataNotFoundException e){
             return ResponseUtil.createErrorResponse(HttpStatus.BAD_REQUEST,"보험이 가입되어있지 않습니다.");
         }
@@ -135,8 +156,8 @@ public class RequestController {
 
     //자동차보험금 청구 페이지
     @PreAuthorize("isAuthenticated")
-    @PostMapping("/auto/{id}")
-    public ResponseEntity<?> postAutoInsurance(@PathVariable("id")int id, @AuthenticationPrincipal UserDetails userDetails, @Valid AutoRequestDTO autoRequestDTO){
+    @PostMapping("/auto/{autoId}")
+    public ResponseEntity<?> postAutoInsurance(@PathVariable("autoId")int id, @AuthenticationPrincipal UserDetails userDetails, @Valid AutoRequestDTO autoRequestDTO){
         String username = userDetails.getUsername();
         SiteUser siteUser = userService.getByUsername(username);
         try {
@@ -162,7 +183,9 @@ public class RequestController {
         SiteUser siteUser = userService.getByUsername(username);
         try {
             HealthInsurance healthInsurance = insuranceService.getHealthBySiteUser(siteUser);
-            return ResponseEntity.ok(healthInsurance);
+            HealthDTO healthDTO = new HealthDTO();
+            healthDTO.EntityToDTO(healthInsurance);
+            return ResponseEntity.ok(healthDTO);
         }catch (DataNotFoundException e){
             return ResponseUtil.createErrorResponse(HttpStatus.BAD_REQUEST,"false");
         }
@@ -177,8 +200,7 @@ public class RequestController {
         SiteUser siteUser = userService.getByUsername(username);
         try {
             HealthInsurance healthInsurance = insuranceService.getHealthBySiteUser(siteUser);
-            Insurance insurance = healthInsurance.getInsurance();
-            if (ChronoUnit.DAYS.between(healthRequestDTO.getDate(), insurance.getStartDate()) < 0) {
+            if (ChronoUnit.DAYS.between(healthRequestDTO.getDate(), healthInsurance.getStartDate()) < 0) {
                 return ResponseUtil.createErrorResponse(HttpStatus.BAD_REQUEST,"보험계약 날짜 내에 발생한 비용만 청구 가능합니다.");
             }
             //비동기 신청
