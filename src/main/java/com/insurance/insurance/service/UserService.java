@@ -5,6 +5,7 @@ import com.insurance.insurance.entity.SiteUser;
 import com.insurance.insurance.entity.UserInfo;
 import com.insurance.insurance.exception.DataNotFoundException;
 import com.insurance.insurance.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -15,11 +16,15 @@ public class UserService {
     private UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+
+    @Transactional
     public SiteUser createByDTO(SignUpDTO signUpDTO, UserInfo userInfo) {
         String username = signUpDTO.getUsername();
         String password = signUpDTO.getPassword();
         return create(username,password, userInfo);
     }
+
+    @Transactional
     public SiteUser create(String username, String password, UserInfo userInfo){
         SiteUser user = new SiteUser();
         user.setUsername(username);

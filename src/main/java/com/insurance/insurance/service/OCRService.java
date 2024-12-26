@@ -9,7 +9,6 @@ import java.io.IOException;
 
 @Service
 public class OCRService {
-
     public String extractText(MultipartFile file) throws IOException {
         // Tesseract 설정
         Tesseract tesseract = new Tesseract();

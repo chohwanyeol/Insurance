@@ -6,6 +6,7 @@ import com.insurance.insurance.entity.UserInfo;
 import com.insurance.insurance.exception.DataNotFoundException;
 import com.insurance.insurance.repository.UserInfoRepository;
 import com.insurance.insurance.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ import java.time.LocalDateTime;
 public class UserInfoService {
     private final UserRepository userRepository;
     private final UserInfoRepository userInfoRepository;
+    @Transactional
     public UserInfo createUserInfoByDTO(SignUpDTO signUpDTO) {
         String name = signUpDTO.getName();
         LocalDate birthday = signUpDTO.getBirthDay();
@@ -29,6 +31,7 @@ public class UserInfoService {
         return create(name,birthday,email,location);
     }
 
+    @Transactional
     public UserInfo create(String name, LocalDate birthday,String email, String location){
         UserInfo userInfo = new UserInfo();
         userInfo.setName(name);

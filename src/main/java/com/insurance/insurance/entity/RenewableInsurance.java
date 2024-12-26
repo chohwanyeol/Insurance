@@ -1,10 +1,15 @@
 package com.insurance.insurance.entity;
 
 
+import com.insurance.insurance.dto.AutoRenewDTO;
+import com.insurance.insurance.dto.FireRenewDTO;
+import com.insurance.insurance.dto.HealthRenewDTO;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -21,4 +26,5 @@ public class RenewableInsurance {
     @OneToOne
     private Insurance insurance;
 
+    private LocalDate date;
 }

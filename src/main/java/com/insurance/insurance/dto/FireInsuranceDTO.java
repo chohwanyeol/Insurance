@@ -1,8 +1,6 @@
 package com.insurance.insurance.dto;
 
 import com.insurance.insurance.entity.FireInsurance;
-import com.insurance.insurance.entity.HealthInsurance;
-import com.insurance.insurance.entity.Insurance;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -11,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class FireDTO extends InsuranceDTO{
+public class FireInsuranceDTO extends InsuranceDTO{
     private Integer fireId;
     private String propertyAddress;     //재산 주소
     private String buildingType;        //건물 유형

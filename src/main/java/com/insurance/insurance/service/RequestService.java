@@ -8,6 +8,7 @@ import com.insurance.insurance.entity.*;
 import com.insurance.insurance.exception.DataNotFoundException;
 import com.insurance.insurance.repository.RequestRepository;
 import com.insurance.insurance.repository.UserInfoRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,8 +28,8 @@ public class RequestService {
     private final InsuranceService insuranceService;
     private final TransactionService transactionService;
 
-
-    public CompletableFuture<Request> requestHealth(SiteUser siteUser, HealthRequestDTO healthRequestDTO){
+    @Transactional
+    public CompletableFuture<Request> requestHealth(SiteUser siteUser, HealthRequestDTO healthRequestDTO,Integer id){
         UserInfo userInfo = siteUser.getUserInfo();
         String content = healthRequestDTO.getContent();
         int price = healthRequestDTO.getPrice();
@@ -55,7 +56,7 @@ public class RequestService {
                 })
                 .toList(); // Stream 결과를 List로 변환
 
-        HealthInsurance healthInsurance = insuranceService.getHealthBySiteUser(siteUser);
+        HealthInsurance healthInsurance = insuranceService.getHealthBySiteUserAndId(siteUser,id);
         RiskRank riskRank = healthInsurance.getRiskRank();
         String description = riskRank.getDescription();
 
@@ -90,6 +91,8 @@ public class RequestService {
         return CompletableFuture.completedFuture(request);
     }
 
+
+    @Transactional
     public CompletableFuture<Request> requestFire(SiteUser siteUser, FireRequestDTO fireRequestDTO, Integer id) {
         UserInfo userInfo = siteUser.getUserInfo();
         //dto정보들 받아오기
@@ -233,6 +236,7 @@ public class RequestService {
         return CompletableFuture.completedFuture(request);
     }
 
+    @Transactional
     private String GPTFireMessage(String content, List<String> receipts, String date, int price, String damageType, List<String> incidentReports, List<String> additionalDocuments, String description) {
         StringBuilder message = new StringBuilder();
 
@@ -283,6 +287,7 @@ public class RequestService {
         return message.toString();
     }
 
+    @Transactional
     private String GPTHealthMessage(String content, int price, List<String> receipts, String date, String claimType, String hospitalName, List<String> additionalDocuments, String description) {
         StringBuilder message = new StringBuilder();
 
@@ -327,6 +332,7 @@ public class RequestService {
         return message.toString();
     }
 
+    @Transactional
     private String GPTAutoMessage(String content, int price, List<String> receipts, String date, String damageType, String accidentLocation,List<String> policeReports, List<String> additionalDocuments, String description) {
         StringBuilder message = new StringBuilder();
 

@@ -4,14 +4,10 @@ package com.insurance.insurance.controller;
 import com.insurance.insurance.dto.*;
 import com.insurance.insurance.entity.*;
 import com.insurance.insurance.exception.DataNotFoundException;
-import com.insurance.insurance.repository.AutoInsuranceRepository;
-import com.insurance.insurance.repository.FireInsuranceRepository;
-import com.insurance.insurance.repository.HealthInsuranceRepository;
 import com.insurance.insurance.service.*;
 import com.insurance.insurance.util.ResponseUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.apache.tomcat.util.http.parser.Authorization;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,7 +19,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import java.time.Period;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +41,7 @@ public class RequestController {
     public ResponseEntity<?> getInsurances(@AuthenticationPrincipal UserDetails userDetails){
         String username = userDetails.getUsername();
         SiteUser siteUser = userService.getByUsername(username);
-        List<Insurance> insuranceList= insuranceService.getBySiteUser(siteUser);
+        List<Insurance> insuranceList= insuranceService.getBySiteUserAndStatus(siteUser,"active");
         List<ProductDTO> productDTOList = insuranceList.stream()
                 .map(insurance -> {
                     ProductDTO productDTO = new ProductDTO();
@@ -66,15 +61,15 @@ public class RequestController {
         String username = userDetails.getUsername();
         SiteUser siteUser = userService.getByUsername(username);
         try {
-            List<FireInsurance> fireInsuranceList = insuranceService.getFireBySiteUser(siteUser);
-            List<FireDTO> fireDTOList = fireInsuranceList.stream()
+            List<FireInsurance> fireInsuranceList = insuranceService.getFireBySiteUserAndStatus(siteUser,"active");
+            List<FireInsuranceDTO> fireInsuranceDTOList = fireInsuranceList.stream()
                     .map(fireInsurance ->{
-                        FireDTO fireDTO = new FireDTO();
-                        fireDTO.EntityToDTO(fireInsurance);
-                        return fireDTO;
+                        FireInsuranceDTO fireInsuranceDTO = new FireInsuranceDTO();
+                        fireInsuranceDTO.EntityToDTO(fireInsurance);
+                        return fireInsuranceDTO;
                     })
                     .toList();
-            return ResponseEntity.ok(fireDTOList);
+            return ResponseEntity.ok(fireInsuranceDTOList);
         }catch (DataNotFoundException e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("status",false));
         }
@@ -88,9 +83,9 @@ public class RequestController {
         SiteUser siteUser = userService.getByUsername(username);
         try {
             FireInsurance fireInsurance = insuranceService.getFireBySiteUserAndId(siteUser,id);
-            FireDTO fireDTO = new FireDTO();
-            fireDTO.EntityToDTO(fireInsurance);
-            return ResponseEntity.ok(fireDTO);
+            FireInsuranceDTO fireInsuranceDTO = new FireInsuranceDTO();
+            fireInsuranceDTO.EntityToDTO(fireInsurance);
+            return ResponseEntity.ok(fireInsuranceDTO);
         }catch (DataNotFoundException e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("status",false));
         }
@@ -124,14 +119,14 @@ public class RequestController {
         String username = userDetails.getUsername();
         SiteUser siteUser = userService.getByUsername(username);
         try {
-            List<AutoInsurance> autoInsuranceList = insuranceService.getAutoBySiteUser(siteUser);
-            List<AutoDTO> autoDTOList = autoInsuranceList.stream()
+            List<AutoInsurance> autoInsuranceList = insuranceService.getAutoBySiteUserAndStatus(siteUser,"active");
+            List<AutoInsuranceDTO> autoInsuranceDTOList = autoInsuranceList.stream()
                     .map(autoInsurance -> {
-                AutoDTO autoDTO = new AutoDTO();
-                autoDTO.EntityToDTO(autoInsurance);
-                return autoDTO;
+                AutoInsuranceDTO autoInsuranceDTO = new AutoInsuranceDTO();
+                autoInsuranceDTO.EntityToDTO(autoInsurance);
+                return autoInsuranceDTO;
             }).toList();
-            return ResponseEntity.ok(autoDTOList);
+            return ResponseEntity.ok(autoInsuranceDTOList);
         }catch (DataNotFoundException e){
             return ResponseUtil.createErrorResponse(HttpStatus.BAD_REQUEST,"보험이 가입되어있지 않습니다.");
         }
@@ -145,9 +140,9 @@ public class RequestController {
         SiteUser siteUser = userService.getByUsername(username);
         try {
             AutoInsurance autoInsurance = insuranceService.getAutoBySiteUserAndId(siteUser, id);
-            AutoDTO autoDTO = new AutoDTO();
-            autoDTO.EntityToDTO(autoInsurance);
-            return ResponseEntity.ok(autoDTO);
+            AutoInsuranceDTO autoInsuranceDTO = new AutoInsuranceDTO();
+            autoInsuranceDTO.EntityToDTO(autoInsurance);
+            return ResponseEntity.ok(autoInsuranceDTO);
         }catch (DataNotFoundException e){
             return ResponseUtil.createErrorResponse(HttpStatus.BAD_REQUEST,"보험이 가입되어있지 않습니다.");
         }
@@ -182,10 +177,10 @@ public class RequestController {
         String username = userDetails.getUsername();
         SiteUser siteUser = userService.getByUsername(username);
         try {
-            HealthInsurance healthInsurance = insuranceService.getHealthBySiteUser(siteUser);
-            HealthDTO healthDTO = new HealthDTO();
-            healthDTO.EntityToDTO(healthInsurance);
-            return ResponseEntity.ok(healthDTO);
+            HealthInsurance healthInsurance = insuranceService.getHealthBySiteUserAndStatus(siteUser,"active");
+            HealthInsuranceDTO healthInsuranceDTO = new HealthInsuranceDTO();
+            healthInsuranceDTO.EntityToDTO(healthInsurance);
+            return ResponseEntity.ok(healthInsuranceDTO);
         }catch (DataNotFoundException e){
             return ResponseUtil.createErrorResponse(HttpStatus.BAD_REQUEST,"false");
         }
@@ -194,17 +189,17 @@ public class RequestController {
 
     //건강보험금 청구 페이지
     @PreAuthorize("isAuthenticated")
-    @PostMapping("/health")
-    public ResponseEntity<?> postHealthInsurances(@AuthenticationPrincipal UserDetails userDetails, @Valid HealthRequestDTO healthRequestDTO){
+    @PostMapping("/health/{healthId}")
+    public ResponseEntity<?> postHealthInsurances(@PathVariable("healthId")int id,@AuthenticationPrincipal UserDetails userDetails, @Valid HealthRequestDTO healthRequestDTO){
         String username = userDetails.getUsername();
         SiteUser siteUser = userService.getByUsername(username);
         try {
-            HealthInsurance healthInsurance = insuranceService.getHealthBySiteUser(siteUser);
+            HealthInsurance healthInsurance = insuranceService.getHealthBySiteUserAndId(siteUser,id);
             if (ChronoUnit.DAYS.between(healthRequestDTO.getDate(), healthInsurance.getStartDate()) < 0) {
                 return ResponseUtil.createErrorResponse(HttpStatus.BAD_REQUEST,"보험계약 날짜 내에 발생한 비용만 청구 가능합니다.");
             }
             //비동기 신청
-            CompletableFuture<Request> requestFuture = requestService.requestHealth(siteUser, healthRequestDTO);
+            CompletableFuture<Request> requestFuture = requestService.requestHealth(siteUser, healthRequestDTO, id);
             requestFuture.thenCompose(request -> transactionService.transaction(siteUser, request));
             return ResponseUtil.createSuccessResponse("status",true);
         }catch (DataNotFoundException e){

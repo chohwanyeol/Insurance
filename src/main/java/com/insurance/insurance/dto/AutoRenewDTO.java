@@ -5,24 +5,9 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDate;
-
 @Getter
 @Setter
-public class AutoJoinDTO extends InsuranceJoinDTO{
-
-    @NotNull(message = "차량번호를 입력해주세요.")
-    private String vehicleNumber;
-
-    @NotNull(message = "차량 모델을 입력해주세요.")
-    private String vehicleModel;
-
-    @NotNull(message = "차량 연식을 입력해주세요.")
-    private Integer vehicleYear;
-
-    @NotNull(message = "운전 시작일을 입력해주세요.")
-    private LocalDate drivingStartDate;
-
+public class AutoRenewDTO {
     @NotNull(message = "최근 사고 여부를 입력해주세요.")
     private Boolean recentAccident;
 

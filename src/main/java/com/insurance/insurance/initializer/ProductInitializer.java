@@ -24,7 +24,7 @@ public class ProductInitializer {
     public void init() {
         if (productRepository.count() == 0) {
             //상품추가
-            Product carInsurance = new Product("자동차보험",
+            Product carInsurance = new Product("auto",
                     "자동차 사고 발생 시 차량 수리비, 대인 및 대물 사고에 대한 종합적인 보장을 제공합니다. " +
                             "출퇴근, 장거리 운전, 영업용 차량 등 다양한 차량이 가입할 수 있습니다. " +
                             "보장 항목으로는 대인 보상, 대물 보상, 차량 손상 보상이 포함됩니다. " +
@@ -32,7 +32,7 @@ public class ProductInitializer {
                     100000,
                     LocalDate.now());
 
-            Product healthInsurance = new Product("건강보험",
+            Product healthInsurance = new Product("health",
                     "질병 및 사고로 인한 입원비, 수술비, 약제비를 보장하는 종합 건강보험입니다. " +
                             "특히 암, 심혈관 질환, 뇌졸중 등 중증 질환에 대한 진단비와 치료비를 포함하여 보장합니다. " +
                             "주요 보장 항목은 입원비, 수술비, 약제비이며, 고객의 연령, 병력, 생활 습관을 고려한 보험료가 책정됩니다. " +
@@ -40,7 +40,7 @@ public class ProductInitializer {
                     120000,
                     LocalDate.now());
 
-            Product fireInsurance = new Product("화재보험",
+            Product fireInsurance = new Product("fire",
                     "예상치 못한 화재 사고로 인한 재산 피해를 보장합니다. " +
                             "주택, 상업시설, 가재도구 등 다양한 자산에 대한 손실을 보상하며, " +
                             "화재로 인해 발생한 대체 거주 비용과 구조 비용도 지원합니다. " +

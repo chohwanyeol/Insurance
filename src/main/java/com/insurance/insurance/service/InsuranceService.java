@@ -49,7 +49,7 @@ public class InsuranceService {
     }
 
     public List<AutoInsurance> getAutoBySiteUser(SiteUser siteUser) {
-        Product product = productService.getByName("자동차보험");
+        Product product = productService.getByName("auto");
         List<AutoInsurance> autoInsuranceList = autoInsuranceRepository.findAllBySiteUser(siteUser)
                 .orElseThrow(() -> new DataNotFoundException("해당 가입내용이 존재하지 않습니다."));
 
@@ -61,10 +61,10 @@ public class InsuranceService {
                 .orElseThrow(() -> new DataNotFoundException("해당 데이터가 존재하지 않습니다."));
     }
 
-    public HealthInsurance getHealthBySiteUser(SiteUser siteUser) {
-        HealthInsurance healthInsurance = healthInsuranceRepository.findBySiteUser(siteUser)
+    public List<HealthInsurance> getHealthBySiteUser(SiteUser siteUser) {
+        List<HealthInsurance> healthInsuranceList = healthInsuranceRepository.findAllBySiteUser(siteUser)
                 .orElseThrow(() -> new DataNotFoundException("해당 가입내용이 존재하지 않습니다."));
-        return healthInsurance;
+        return healthInsuranceList;
     }
 
     public List<RenewableInsurance> getRenewableBySiteUser(SiteUser siteUser) {
@@ -72,9 +72,11 @@ public class InsuranceService {
     }
 
     public RenewableInsurance getRenewableBySiteUserAndId(SiteUser siteUser, Integer id) {
-        return renewableInsuranceRepository.findBySiteUserAndId(siteUser, id);
+        return renewableInsuranceRepository.findBySiteUserAndId(siteUser, id)
+                .orElseThrow(()-> new DataNotFoundException("데이터가 존재하지 않습니다."));
     }
 
+    @Transactional
     private <T extends Insurance> T create(SiteUser siteUser, InsuranceJoinDTO insuranceJoinDTO, String type, T insurance) {
         UserInfo userInfo = siteUser.getUserInfo();
         int age = Period.between(userInfo.getBirthDay(), LocalDate.now()).getYears();
@@ -82,15 +84,15 @@ public class InsuranceService {
         int riskScore = 0;
         String rank = "";
         switch (type) {
-            case "건강보험":
+            case "health":
                 riskScore = calculateHealthRiskScore((HealthJoinDTO) insuranceJoinDTO, age);
                 rank = getCoveragePlan(riskScore);
                 break;
-            case "자동차보험":
+            case "auto":
                 riskScore = calculateAutoRiskScore((AutoJoinDTO) insuranceJoinDTO, age);
                 rank = getCoveragePlan(riskScore);
                 break;
-            case "화재보험":
+            case "fire":
                 riskScore = calculateFireRiskScore((FireJoinDTO) insuranceJoinDTO);
                 rank = getCoveragePlan(riskScore);
                 break;
@@ -119,46 +121,120 @@ public class InsuranceService {
         return insuranceRepository.save(insurance);
     }
 
+    @Transactional
     public Insurance cancel(Insurance insurance) {
         insurance.setStatus("cancelled");
         return insuranceRepository.save(insurance);
     }
 
-    @Async
+    @Transactional
     public HealthInsurance createHealth(SiteUser siteUser, HealthJoinDTO healthJoinDTO) {
         HealthInsurance healthInsurance = new HealthInsurance();
-        healthInsurance = create(siteUser, healthJoinDTO, "건강보험",healthInsurance);
+        healthInsurance = create(siteUser, healthJoinDTO, "health",healthInsurance);
         healthInsurance.setFamily(String.join(", ", healthJoinDTO.getFamily()));
         healthInsurance.setPreExistingConditions(String.join(", ", healthJoinDTO.getPre_existing_conditions()));
         return healthInsuranceRepository.save(healthInsurance);
     }
 
-    @Async
-    public AutoInsurance createAuto(SiteUser siteUser, AutoJoinDTO autoJoinDTO) {
+    @Transactional
+    public HealthInsurance updateHealth(SiteUser siteUser, Integer id, HealthRenewDTO healthRenewDTO){
+        FireInsurance fireInsurance = fireInsuranceRepository.findBySiteUserAndId(siteUser,id)
+                .orElseThrow(()->new DataNotFoundException("데이터가 존재하지 않습니다."));
 
+        HealthInsurance healthInsurance = healthInsuranceRepository.findBySiteUserAndId(siteUser,id)
+                .orElseThrow(()->new DataNotFoundException("데이터가 존재하지 않습니다."));
+        Product product = healthInsurance.getProduct();
+        HealthJoinDTO healthJoinDTO = new HealthJoinDTO();
+        healthJoinDTO.setDrink(healthRenewDTO.getDrink());
+        healthJoinDTO.setExercise(healthRenewDTO.getExercise());
+        healthJoinDTO.setSmoke(healthRenewDTO.getSmoke());
+        healthJoinDTO.setFamily(healthRenewDTO.getFamily());
+        healthJoinDTO.setSurgery(healthRenewDTO.getSurgery());
+        healthJoinDTO.setPre_existing_conditions(healthRenewDTO.getPre_existing_conditions());
+        int age = Period.between(siteUser.getUserInfo().getBirthDay(), LocalDate.now()).getYears();
+        int riskScore = calculateHealthRiskScore(healthJoinDTO, age);
+        RiskRank riskRank = riskRankService.getByNameAndProduct(getCoveragePlan(riskScore),product);
+        int price = (int) (riskRank.getPrice_rate() * product.getPrice());
+        healthInsurance.setPrice(price);
+        healthInsurance.setRiskScore(riskScore);
+        healthInsurance.setRiskRank(riskRank);
+        healthInsurance.setFamily(String.join(", ", healthJoinDTO.getFamily()));
+        healthInsurance.setPreExistingConditions(String.join(", ", healthJoinDTO.getPre_existing_conditions()));
+        return healthInsuranceRepository.save(healthInsurance);
+    }
+
+    @Transactional
+    public AutoInsurance createAuto(SiteUser siteUser, AutoJoinDTO autoJoinDTO) {
         AutoInsurance autoInsurance = new AutoInsurance();
-        autoInsurance = create(siteUser, autoJoinDTO, "자동차보험", autoInsurance);
+        autoInsurance = create(siteUser, autoJoinDTO, "auto", autoInsurance);
         autoInsurance.setVehicleNumber(autoJoinDTO.getVehicleNumber());
-        autoInsurance.setVehicleModel(autoInsurance.getVehicleModel());
-        autoInsurance.setVehicleYear(autoInsurance.getVehicleYear());
-        autoInsurance.setDrivingExperience(autoInsurance.getDrivingExperience());
-        autoInsurance.setRecentAccident(autoInsurance.getRecentAccident());
-        autoInsurance.setVehicleUsage(autoInsurance.getVehicleUsage());
+        autoInsurance.setVehicleModel(autoJoinDTO.getVehicleModel());
+        autoInsurance.setVehicleYear(autoJoinDTO.getVehicleYear());
+        autoInsurance.setDrivingStartDate(autoJoinDTO.getDrivingStartDate());
+        autoInsurance.setRecentAccident(autoJoinDTO.getRecentAccident());
+        autoInsurance.setVehicleUsage(autoJoinDTO.getVehicleUsage());
         return autoInsuranceRepository.save(autoInsurance);
     }
 
+    @Transactional
+    public AutoInsurance updateAuto(SiteUser siteUser, Integer id, AutoRenewDTO autoRenewDTO){
+        AutoInsurance autoInsurance = autoInsuranceRepository.findBySiteUserAndId(siteUser,id)
+                .orElseThrow(()->new DataNotFoundException("데이터가 존재하지 않습니다."));
+        Product product = autoInsurance.getProduct();
+        AutoJoinDTO autoJoinDTO = new AutoJoinDTO();
 
-    @Async
+        autoJoinDTO.setMonthlyMileage(autoRenewDTO.getMonthlyMileage());
+        autoJoinDTO.setRecentAccident(autoRenewDTO.getRecentAccident());
+        autoJoinDTO.setVehicleUsage(autoRenewDTO.getVehicleUsage());
+        autoJoinDTO.setDrivingStartDate(autoInsurance.getDrivingStartDate());
+        autoJoinDTO.setVehicleYear(autoInsurance.getVehicleYear());
+        int age = Period.between(siteUser.getUserInfo().getBirthDay(), LocalDate.now()).getYears();
+        int riskScore = calculateAutoRiskScore(autoJoinDTO, age);
+        RiskRank riskRank = riskRankService.getByNameAndProduct(getCoveragePlan(riskScore),product);
+        int price = (int) (riskRank.getPrice_rate() * product.getPrice());
+
+        autoInsurance.setVehicleUsage(autoJoinDTO.getVehicleUsage());
+        autoInsurance.setVehicleYear(autoJoinDTO.getVehicleYear());
+        autoInsurance.setDrivingStartDate(autoJoinDTO.getDrivingStartDate());
+        autoInsurance.setRecentAccident(autoJoinDTO.getRecentAccident());
+        autoInsurance.setRiskScore(riskScore);
+        autoInsurance.setRiskRank(riskRank);
+        return autoInsuranceRepository.save(autoInsurance);
+    }
+
+    @Transactional
     public FireInsurance createFire(SiteUser siteUser, FireJoinDTO fireJoinDTO) {
         FireInsurance fireInsurance = new FireInsurance();
-        fireInsurance = create(siteUser, fireJoinDTO, "화재보험", fireInsurance);
+        fireInsurance = create(siteUser, fireJoinDTO, "fire", fireInsurance);
         fireInsurance.setPropertyAddress(fireJoinDTO.getPropertyAddress());
-        fireInsurance.setBuildingType(fireInsurance.getBuildingType());
+        fireInsurance.setBuildingType(fireJoinDTO.getBuildingType());
         fireInsurance.setBuildingYear(fireJoinDTO.getBuildingYear());
         fireInsurance.setPreviousFire(fireJoinDTO.getPreviousFire());
         return fireInsuranceRepository.save(fireInsurance);
     }
 
+    @Transactional
+    public FireInsurance updateFire(SiteUser siteUser, Integer id, FireRenewDTO fireRenewDTO) {
+        FireInsurance fireInsurance = fireInsuranceRepository.findBySiteUserAndId(siteUser,id)
+                .orElseThrow(()->new DataNotFoundException("데이터가 존재하지 않습니다."));
+
+        Product product = fireInsurance.getProduct();
+        FireJoinDTO fireJoinDTO = new FireJoinDTO();
+        fireJoinDTO.setPreviousFire(fireRenewDTO.getPreviousFire());
+        fireJoinDTO.setBuildingYear(fireInsurance.getBuildingYear());
+        fireJoinDTO.setBuildingType(fireInsurance.getBuildingType());
+        fireJoinDTO.setOccupants(fireRenewDTO.getOccupants());
+        int riskScore = calculateFireRiskScore(fireJoinDTO);
+        RiskRank riskRank = riskRankService.getByNameAndProduct(getCoveragePlan(riskScore),product);
+        int price = (int) (riskRank.getPrice_rate() * product.getPrice());
+        fireInsurance.setPrice(price);
+        fireInsurance.setPreviousFire(fireJoinDTO.getPreviousFire());
+        fireInsurance.setRiskScore(riskScore);
+        fireInsurance.setRiskRank(riskRank);
+        return fireInsuranceRepository.save(fireInsurance);
+
+
+    }
 
     @Transactional
     public void startInsurance(SiteUser siteUser, int id) {
@@ -255,6 +331,13 @@ public class InsuranceService {
         int riskScore = 0;
         int currentYear = LocalDate.now().getYear();
         int vehicleAge = currentYear - autoJoinDTO.getVehicleYear();
+        LocalDate drivingStartDate = autoJoinDTO.getDrivingStartDate(); // 운전 시작 날짜
+        LocalDate today = LocalDate.now();
+        // 시작 날짜와 오늘의 차이를 계산
+        Period period = Period.between(drivingStartDate, today);
+        // 정확한 운전 경력 계산 (월과 일을 포함한 연 단위)
+        int drivingExperience = period.getYears();
+
 
         // 차량 연식에 따른 리스크 점수
         if (vehicleAge > 20) { // 20년 이상된 차량
@@ -264,9 +347,9 @@ public class InsuranceService {
         }
 
         // 운전 경력
-        if (autoJoinDTO.getDrivingExperience() < 2) {
+        if (drivingExperience < 2) {
             riskScore += 25; // 초보 운전자는 높은 리스크
-        } else if (autoJoinDTO.getDrivingExperience() < 5) {
+        } else if (drivingExperience < 5) {
             riskScore += 15;
         }
 
@@ -313,8 +396,122 @@ public class InsuranceService {
         }
     }
 
+    @Transactional
+    public void deleteAllByStatus(String status) { insuranceRepository.deleteAllByStatus(status);
+    }
+
+    public AutoInsurance getAutoBySiteUserAndVehicleNumber(SiteUser siteUser, String vehicleNumber) {
+        return autoInsuranceRepository.findBySiteUserAndVehicleNumber(siteUser,vehicleNumber)
+                .orElseThrow(()-> new DataNotFoundException("데이터가 존재하지 않습니다."));
+    }
+
+    public FireInsurance getFireBySiteUserAndPropertyAddressAndBuildingType(SiteUser siteUser, String propertyAddress, String buildingType) {
+        return fireInsuranceRepository.findBySiteUserAndPropertyAddressAndBuildingType(siteUser,propertyAddress,buildingType)
+                .orElseThrow(()->new DataNotFoundException("데이터가 존재하지 않습니다."));
+    }
 
 
+    @Transactional
+    public List<RenewableInsurance> getDontRenew() {
+        LocalDate now = LocalDate.now();
+        LocalDate targetDate = now.minusMonths(2); // 현재 날짜에서 한 달 후 계산
+        int targetYear = targetDate.getYear();
+        int targetMonth = targetDate.getMonthValue();
+        int targetDay = targetDate.getDayOfMonth();
+        List<RenewableInsurance> renewableInsuranceList = renewableInsuranceRepository.findAllDontRenew(targetYear,targetMonth,targetDay);
+        return renewableInsuranceList;
+    }
+
+    @Transactional
+    public void setDontRenew(List<RenewableInsurance> renewableInsuranceList) {
+        List<Insurance> insuranceList = renewableInsuranceList.stream()
+                .map(renewableInsurance -> {
+                    Insurance insurance = renewableInsurance.getInsurance();
+                    Product product = insurance.getProduct();
+                    RiskRank riskRank = riskRankService.getByNameAndProduct("Emergency Only", product);
+                    insurance.setRiskRank(riskRank);
+                    insurance.setRiskScore(100);
+                    int price = (int) (riskRank.getPrice_rate() * product.getPrice());
+                    insurance.setPrice(price);
+                    return insurance;
+                })
+                .toList();
+
+        insuranceRepository.saveAll(insuranceList);
+        renewableInsuranceRepository.deleteAll(renewableInsuranceList);
+    }
+
+
+
+    @Transactional
+    public List<Insurance> getInsuranceRenewable() {
+        LocalDate now = LocalDate.now();
+        LocalDate targetDate = now.plusMonths(1); // 현재 날짜에서 한 달 후 계산
+        int targetYear = targetDate.getYear();
+        int targetMonth = targetDate.getMonthValue();
+        int targetDay = targetDate.getDayOfMonth();
+        List<Insurance> insuranceList = insuranceRepository.findAllRenewable(targetYear,targetMonth,targetDay);
+        return insuranceList;
+    }
+
+    @Transactional
+    public void setInsuranceRenewable(List<Insurance> insuranceList) {
+        List<RenewableInsurance> renewableInsuranceList = insuranceList.stream()
+                .map(insurance -> {
+                    RenewableInsurance renewableInsurance = new RenewableInsurance();
+                    renewableInsurance.setInsurance(insurance);
+                    renewableInsurance.setSiteUser(insurance.getSiteUser());
+                    renewableInsurance.setDate(LocalDate.now());
+                    return renewableInsurance;
+                })
+                .toList();
+        renewableInsuranceRepository.saveAll(renewableInsuranceList);
+
+    }
+
+
+
+
+    @Transactional
+    public void setInsuranceExpired() {
+        LocalDate now = LocalDate.now();
+        List<Insurance> insuranceList =
+                insuranceRepository.findAllByEndDate(now)
+                        .stream().map(insurance -> {
+                            insurance.setStatus("expired");
+                            return insurance;
+                        }).toList();
+
+        insuranceRepository.saveAll(insuranceList);
+
+    }
+
+    public HealthInsurance getHealthBySiteUserAndId(SiteUser siteUser, int id) {
+        return healthInsuranceRepository.findBySiteUserAndId(siteUser,id)
+                .orElseThrow(
+                        ()-> new DataNotFoundException("데이터가 존재하지 않습니다")
+                );
+    }
+
+    public List<Insurance> getBySiteUserAndStatus(SiteUser siteUser, String status) {
+        return insuranceRepository.findAllBySiteUserAndStatus(siteUser,status);
+    }
+
+    public List<FireInsurance> getFireBySiteUserAndStatus(SiteUser siteUser, String status) {
+        return fireInsuranceRepository.findAllBySiteUserAndStatus(siteUser,status);
+    }
+
+    public List<AutoInsurance> getAutoBySiteUserAndStatus(SiteUser siteUser, String status) {
+        return autoInsuranceRepository.findAllBySiteUserAndStatus(siteUser,status);
+    }
+
+    public HealthInsurance getHealthBySiteUserAndStatus(SiteUser siteUser, String status) {
+        return healthInsuranceRepository.findBySiteUserAndStatus(siteUser,status);
+    }
+
+    public void deleteRenewable(RenewableInsurance renewableInsurance) {
+        renewableInsuranceRepository.delete(renewableInsurance);
+    }
 }
 
 
