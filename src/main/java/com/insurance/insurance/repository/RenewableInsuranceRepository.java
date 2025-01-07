@@ -20,9 +20,9 @@ public interface RenewableInsuranceRepository extends JpaRepository<RenewableIns
 
     @Query("""
     SELECT i FROM RenewableInsurance i
-    WHERE FUNCTION('MONTH', i.date) = :targetMonth
-      AND FUNCTION('DAY', i.date) = :targetDay
-      AND FUNCTION('YEAR', i.date) != :targetYear
+    WHERE FUNCTION('MONTH', i.createDate) = :targetMonth
+      AND FUNCTION('DAY', i.createDate) = :targetDay
+      AND FUNCTION('YEAR', i.createDate) != :targetYear
     """)
     List<RenewableInsurance> findAllDontRenew(@Param("targetYear") int targetYear,
                                               @Param("targetMonth") int targetMonth,

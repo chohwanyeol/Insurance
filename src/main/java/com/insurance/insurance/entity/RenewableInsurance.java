@@ -26,5 +26,5 @@ public class RenewableInsurance {
     @OneToOne
     private Insurance insurance;
 
-    private LocalDate date;
+    private LocalDate createDate;
 }

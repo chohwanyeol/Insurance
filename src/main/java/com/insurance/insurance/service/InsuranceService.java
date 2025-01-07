@@ -461,7 +461,7 @@ public class InsuranceService {
                     RenewableInsurance renewableInsurance = new RenewableInsurance();
                     renewableInsurance.setInsurance(insurance);
                     renewableInsurance.setSiteUser(insurance.getSiteUser());
-                    renewableInsurance.setDate(LocalDate.now());
+                    renewableInsurance.setCreateDate(LocalDate.now());
                     return renewableInsurance;
                 })
                 .toList();

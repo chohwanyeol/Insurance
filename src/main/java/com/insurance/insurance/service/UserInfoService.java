@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 public class UserInfoService {
     private final UserRepository userRepository;
     private final UserInfoRepository userInfoRepository;
+
     @Transactional
     public UserInfo createUserInfoByDTO(SignUpDTO signUpDTO) {
         String name = signUpDTO.getName();

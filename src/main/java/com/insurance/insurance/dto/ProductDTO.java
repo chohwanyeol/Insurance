@@ -9,10 +9,10 @@ import lombok.Setter;
 @Getter
 @NoArgsConstructor
 public class ProductDTO {
-    private String name;
+    private String title;
     private String description;
     public void EntityToDTO(Product product){
-        this.name = product.getName();
+        this.title = product.getTitle();
         this.description = product.getDescription();
     }
 }
