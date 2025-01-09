@@ -9,7 +9,6 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class AutoInsuranceDTO extends InsuranceDTO{
-    private Integer autoId;
     private String vehicleNumber;    // 차량 번호
     private String vehicleModel;     // 차량 모델
     private Integer vehicleYear;     // 차량 연식
@@ -18,7 +17,6 @@ public class AutoInsuranceDTO extends InsuranceDTO{
 
     public void EntityToDTO(AutoInsurance autoInsurance) {
         super.EntityToDTO(autoInsurance);
-        this.autoId = autoInsurance.getId();
         this.vehicleNumber = autoInsurance.getVehicleNumber();
         this.vehicleModel = autoInsurance.getVehicleModel();
         this.vehicleYear = autoInsurance.getVehicleYear();

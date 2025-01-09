@@ -28,17 +28,19 @@ public class UserInfoService {
         String name = signUpDTO.getName();
         LocalDate birthday = signUpDTO.getBirthDay();
         String email = signUpDTO.getEmail();
-        String location = signUpDTO.getLocation().trim() + " " + signUpDTO.getDetailLocation().trim();
-        return create(name,birthday,email,location);
+        String location = signUpDTO.getLocation().trim();
+        String detailLocation = signUpDTO.getDetailLocation().trim();
+        return create(name,birthday,email,location, detailLocation);
     }
 
     @Transactional
-    public UserInfo create(String name, LocalDate birthday,String email, String location){
+    public UserInfo create(String name, LocalDate birthday,String email, String location, String detailLocation){
         UserInfo userInfo = new UserInfo();
         userInfo.setName(name);
         userInfo.setBirthDay(birthday);
         userInfo.setEmail(email);
         userInfo.setLocation(location);
+        userInfo.setDetailLocation(detailLocation);
         userInfo.setCreate_date(LocalDate.now());
         userInfo.setUpdate_date(LocalDate.now());
         return userInfoRepository.save(userInfo);

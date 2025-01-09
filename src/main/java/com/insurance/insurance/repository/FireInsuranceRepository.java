@@ -13,7 +13,9 @@ public interface FireInsuranceRepository extends JpaRepository<FireInsurance,Int
 
     Optional<List<FireInsurance>> findAllBySiteUser(SiteUser siteUser);
 
-    Optional<FireInsurance> findBySiteUserAndPropertyAddressAndBuildingType(SiteUser siteUser, String propertyAddress, String buildingType);
+    Optional<FireInsurance> findBySiteUserAndPropertyAddressAndPropertyDetailAddressAndBuildingType(SiteUser siteUser, String propertyAddress, String propertyDetailAddress,String buildingType);
 
     List<FireInsurance> findAllBySiteUserAndStatus(SiteUser siteUser, String status);
+
+    Optional<FireInsurance> findFirstBySiteUserAndStatus(SiteUser siteUser, String status);
 }

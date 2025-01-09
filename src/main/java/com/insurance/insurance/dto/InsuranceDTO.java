@@ -13,7 +13,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 public class InsuranceDTO {
     private Integer insuranceId;         // 보험 ID
-    private String productName;          // 보험 이름
+    private String productTitle;          // 보험 이름
     private String productDescription;   // 보험 설명
     private String userName;             // 가입자 이름
     private String userBirthday;         // 가입자 생년월일
@@ -33,7 +33,7 @@ public class InsuranceDTO {
         Product product = insurance.getProduct();
         UserInfo userInfo = insurance.getSiteUser().getUserInfo();
         this.insuranceId = insurance.getId();
-        this.productName = product.getName();
+        this.productTitle = product.getTitle();
         this.productDescription = product.getDescription();
         this.bank = insurance.getBank();
         this.bankAccount = insurance.getBankAccount();

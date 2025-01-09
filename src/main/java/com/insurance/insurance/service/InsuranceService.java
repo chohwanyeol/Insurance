@@ -101,7 +101,7 @@ public class InsuranceService {
         Product product = productService.getByName(type);
         RiskRank riskRank = riskRankService.getByNameAndProduct(rank, product);
 
-        int price = (int) (riskRank.getPrice_rate() * product.getPrice());
+        int price = (int) (riskRank.getPrice_rate()/100 * product.getPrice());
         String bank = insuranceJoinDTO.getBank();
         String bankAccount = insuranceJoinDTO.getAccount();
         LocalDate startDate = LocalDate.now().plusDays(1);
@@ -111,6 +111,7 @@ public class InsuranceService {
         insurance.setSiteUser(siteUser);
         insurance.setProduct(product);
         insurance.setRiskRank(riskRank);
+        insurance.setRiskScore(riskScore);
         insurance.setPrice(price);
         insurance.setStatus("pending");
         insurance.setStartDate(startDate);
@@ -207,6 +208,7 @@ public class InsuranceService {
         FireInsurance fireInsurance = new FireInsurance();
         fireInsurance = create(siteUser, fireJoinDTO, "fire", fireInsurance);
         fireInsurance.setPropertyAddress(fireJoinDTO.getPropertyAddress());
+        fireInsurance.setPropertyDetailAddress(fireJoinDTO.getPropertyDetailAddress());
         fireInsurance.setBuildingType(fireJoinDTO.getBuildingType());
         fireInsurance.setBuildingYear(fireJoinDTO.getBuildingYear());
         fireInsurance.setPreviousFire(fireJoinDTO.getPreviousFire());
@@ -405,8 +407,8 @@ public class InsuranceService {
                 .orElseThrow(()-> new DataNotFoundException("데이터가 존재하지 않습니다."));
     }
 
-    public FireInsurance getFireBySiteUserAndPropertyAddressAndBuildingType(SiteUser siteUser, String propertyAddress, String buildingType) {
-        return fireInsuranceRepository.findBySiteUserAndPropertyAddressAndBuildingType(siteUser,propertyAddress,buildingType)
+    public FireInsurance getFireBySiteUserAndPropertyAddressAndPropertyDetailAddressAndBuildingType(SiteUser siteUser, String propertyAddress, String propertyDetailAddress, String buildingType) {
+        return fireInsuranceRepository.findBySiteUserAndPropertyAddressAndPropertyDetailAddressAndBuildingType(siteUser,propertyAddress,propertyDetailAddress,buildingType)
                 .orElseThrow(()->new DataNotFoundException("데이터가 존재하지 않습니다."));
     }
 
@@ -495,6 +497,7 @@ public class InsuranceService {
 
     public List<Insurance> getBySiteUserAndStatus(SiteUser siteUser, String status) {
         return insuranceRepository.findAllBySiteUserAndStatus(siteUser,status);
+
     }
 
     public List<FireInsurance> getFireBySiteUserAndStatus(SiteUser siteUser, String status) {
@@ -505,8 +508,25 @@ public class InsuranceService {
         return autoInsuranceRepository.findAllBySiteUserAndStatus(siteUser,status);
     }
 
+    public FireInsurance getFirstFireBySiteUserAndStatus(SiteUser siteUser, String status) {
+        return fireInsuranceRepository.findFirstBySiteUserAndStatus(siteUser,status)
+                .orElseThrow(
+                        ()-> new DataNotFoundException("데이터가 존재하지 않습니다")
+                );
+    }
+
+    public AutoInsurance getFirstAutoBySiteUserAndStatus(SiteUser siteUser, String status) {
+        return autoInsuranceRepository.findFirstBySiteUserAndStatus(siteUser,status)
+                .orElseThrow(
+                        ()-> new DataNotFoundException("데이터가 존재하지 않습니다")
+                );
+    }
+
     public HealthInsurance getHealthBySiteUserAndStatus(SiteUser siteUser, String status) {
-        return healthInsuranceRepository.findBySiteUserAndStatus(siteUser,status);
+        return healthInsuranceRepository.findBySiteUserAndStatus(siteUser,status)
+                .orElseThrow(
+                        ()-> new DataNotFoundException("데이터가 존재하지 않습니다")
+                );
     }
 
     public void deleteRenewable(RenewableInsurance renewableInsurance) {

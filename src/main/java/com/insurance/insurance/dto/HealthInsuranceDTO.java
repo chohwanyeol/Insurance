@@ -9,10 +9,8 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class HealthInsuranceDTO extends InsuranceDTO {
-    private Integer healthId;
 
     public void EntityToDTO(HealthInsurance healthInsurance) {
         super.EntityToDTO(healthInsurance);
-        this.healthId = healthInsurance.getId();
     }
 }

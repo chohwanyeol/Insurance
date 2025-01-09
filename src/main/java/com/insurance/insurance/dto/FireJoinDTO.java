@@ -24,5 +24,8 @@ public class FireJoinDTO extends InsuranceJoinDTO {
 
     @NotNull(message = "건물 주소를 입력해주세요.")
     private String propertyAddress;
+
+    @NotNull(message = "건물 상세 주소를 입력해주세요.")
+    private String propertyDetailAddress;
 }
 

@@ -18,4 +18,6 @@ public interface AutoInsuranceRepository extends JpaRepository<AutoInsurance,Int
     Optional<AutoInsurance> findBySiteUserAndVehicleNumber(SiteUser siteUser, String vehicleNumber);
 
     List<AutoInsurance> findAllBySiteUserAndStatus(SiteUser siteUser, String status);
+
+    Optional<AutoInsurance> findFirstBySiteUserAndStatus(SiteUser siteUser, String status);
 }

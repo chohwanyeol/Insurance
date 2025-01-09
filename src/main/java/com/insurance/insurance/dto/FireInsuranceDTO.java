@@ -10,15 +10,17 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class FireInsuranceDTO extends InsuranceDTO{
-    private Integer fireId;
     private String propertyAddress;     //재산 주소
+    private String propertyDetailAddress; // 상세 주소
     private String buildingType;        //건물 유형
     private Integer buildingYear;       //건축 년도
 
     public void EntityToDTO(FireInsurance fireInsurance) {
         super.EntityToDTO(fireInsurance);
-        this.fireId = fireInsurance.getId();
         this.propertyAddress = fireInsurance.getPropertyAddress();
+        this.propertyDetailAddress = fireInsurance.getPropertyDetailAddress();
         this.buildingType = fireInsurance.getBuildingType();
+        this.buildingYear = fireInsurance.getBuildingYear();
+
     }
 }

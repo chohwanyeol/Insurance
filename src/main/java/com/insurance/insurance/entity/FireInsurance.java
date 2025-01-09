@@ -14,6 +14,8 @@ import lombok.Setter;
 public class FireInsurance extends Insurance{
     private String propertyAddress;     //재산 주소
 
+    private String propertyDetailAddress; //상세 주소
+
     private String buildingType;        //건물 유형
 
     private Integer buildingYear;       //건축 년도

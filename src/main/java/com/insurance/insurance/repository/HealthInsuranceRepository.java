@@ -13,5 +13,5 @@ public interface HealthInsuranceRepository extends JpaRepository<HealthInsurance
 
     Optional<HealthInsurance> findBySiteUserAndId(SiteUser siteUser, int id);
 
-    HealthInsurance findBySiteUserAndStatus(SiteUser siteUser, String status);
+    Optional<HealthInsurance> findBySiteUserAndStatus(SiteUser siteUser, String status);
 }

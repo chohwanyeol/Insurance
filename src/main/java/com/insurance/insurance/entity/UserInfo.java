@@ -26,6 +26,8 @@ public class UserInfo {
 
     private String location;
 
+    private String detailLocation;
+
     private LocalDate create_date;
 
     private LocalDate update_date;
