@@ -31,5 +31,10 @@ public class Transaction {
     private String status;      //[note: "pending, approved, rejected"]
 
     public Transaction(SiteUser siteUser, Insurance insurance, Integer price, LocalDateTime dateTime, String status) {
+        this.siteUser = siteUser;
+        this.insurance = insurance;
+        this.price =price;
+        this.dateTime = dateTime;
+        this.status=status;
     }
 }

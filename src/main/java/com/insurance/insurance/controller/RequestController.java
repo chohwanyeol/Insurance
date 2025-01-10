@@ -6,6 +6,7 @@ import com.insurance.insurance.entity.*;
 import com.insurance.insurance.exception.DataNotFoundException;
 import com.insurance.insurance.service.*;
 import com.insurance.insurance.util.ResponseUtil;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -14,10 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -71,7 +69,7 @@ public class RequestController {
                     .toList();
             return ResponseEntity.ok(fireInsuranceDTOList);
         }catch (DataNotFoundException e){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("status",false));
+            return ResponseUtil.createErrorResponse(HttpStatus.BAD_REQUEST,"가입된 보험이 없습니다.");
         }
     }
 
@@ -95,16 +93,16 @@ public class RequestController {
     //화재보험금 청구
     @PreAuthorize("isAuthenticated")
     @PostMapping("/fire/{fireId}")
-    public ResponseEntity<?> postFireInsurances(@PathVariable("fireId")int id,@AuthenticationPrincipal UserDetails userDetails, @Valid FireRequestDTO fireRequestDTO){
+    public ResponseEntity<?> postFireInsurances(@PathVariable("fireId")int id,@AuthenticationPrincipal UserDetails userDetails, @Valid @ModelAttribute FireRequestDTO fireRequestDTO){
         String username = userDetails.getUsername();
         SiteUser siteUser = userService.getByUsername(username);
         try {
             FireInsurance fireInsurance = insuranceService.getFireBySiteUserAndId(siteUser,id);
-
+            if (fireRequestDTO.getDate().compareTo(fireInsurance.getStartDate()) < 0) {
+                return ResponseUtil.createErrorResponse(HttpStatus.BAD_REQUEST,"보험계약 날짜 내에 발생한 비용만 청구 가능합니다.");
+            }
             //비동기 신청
-            CompletableFuture<Request> requestFuture = requestService.requestFire(siteUser, fireRequestDTO, id);
-            requestFuture.thenCompose(request -> transactionService.transaction(siteUser, request));
-
+            requestService.requestFire(siteUser, fireRequestDTO, id);
             return ResponseEntity.ok(Map.of("status",true));
         }catch (DataNotFoundException e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("status",false));
@@ -128,7 +126,7 @@ public class RequestController {
             }).toList();
             return ResponseEntity.ok(autoInsuranceDTOList);
         }catch (DataNotFoundException e){
-            return ResponseUtil.createErrorResponse(HttpStatus.BAD_REQUEST,"보험이 가입되어있지 않습니다.");
+            return ResponseUtil.createErrorResponse(HttpStatus.BAD_REQUEST,"가입된 보험이 없습니다.");
         }
     }
 
@@ -152,20 +150,19 @@ public class RequestController {
     //자동차보험금 청구 페이지
     @PreAuthorize("isAuthenticated")
     @PostMapping("/auto/{autoId}")
-    public ResponseEntity<?> postAutoInsurance(@PathVariable("autoId")int id, @AuthenticationPrincipal UserDetails userDetails, @Valid AutoRequestDTO autoRequestDTO){
+    public ResponseEntity<?> postAutoInsurance(@PathVariable("autoId")int id, @AuthenticationPrincipal UserDetails userDetails, @Valid @ModelAttribute AutoRequestDTO autoRequestDTO){
         String username = userDetails.getUsername();
         SiteUser siteUser = userService.getByUsername(username);
         try {
             AutoInsurance autoInsurance = insuranceService.getAutoBySiteUserAndId(siteUser, id);
-            //비동기 신청
-            CompletableFuture<Request> requestFuture = requestService.requestAuto(siteUser, autoRequestDTO, id);
-            requestFuture.thenCompose(request -> transactionService.transaction(siteUser, request));
-            //결과 메일
-
+            if (autoRequestDTO.getDate().compareTo(autoInsurance.getStartDate()) < 0) {
+                return ResponseUtil.createErrorResponse(HttpStatus.BAD_REQUEST,"보험계약 날짜 내에 발생한 비용만 청구 가능합니다.");
+            }
+            requestService.requestAuto(siteUser, autoRequestDTO, id);
 
             return ResponseEntity.ok(Map.of("status",true));
         }catch (DataNotFoundException e){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("status",false));
+            return ResponseUtil.createErrorResponse(HttpStatus.BAD_REQUEST,"보험이 가입되어있지 않습니다.");
         }
     }
 
@@ -182,25 +179,39 @@ public class RequestController {
             healthInsuranceDTO.EntityToDTO(healthInsurance);
             return ResponseEntity.ok(healthInsuranceDTO);
         }catch (DataNotFoundException e){
-            return ResponseUtil.createErrorResponse(HttpStatus.BAD_REQUEST,"false");
+            return ResponseUtil.createErrorResponse(HttpStatus.BAD_REQUEST,"가입된 보험이 없습니다.");
         }
     }
 
 
+    //자동차보험금 청구 페이지
+    @PreAuthorize("isAuthenticated")
+    @GetMapping("/health/{healthId}")
+    public ResponseEntity<?> getHealthInsurances(@PathVariable("healthId")int id, @AuthenticationPrincipal UserDetails userDetails){
+        String username = userDetails.getUsername();
+        SiteUser siteUser = userService.getByUsername(username);
+        try {
+            HealthInsurance healthInsurance = insuranceService.getHealthBySiteUserAndId(siteUser, id);
+            HealthInsuranceDTO healthInsuranceDTO = new HealthInsuranceDTO();
+            healthInsuranceDTO.EntityToDTO(healthInsurance);
+            return ResponseEntity.ok(healthInsuranceDTO);
+        }catch (DataNotFoundException e){
+            return ResponseUtil.createErrorResponse(HttpStatus.BAD_REQUEST,"보험이 가입되어있지 않습니다.");
+        }
+    }
+
     //건강보험금 청구 페이지
     @PreAuthorize("isAuthenticated")
     @PostMapping("/health/{healthId}")
-    public ResponseEntity<?> postHealthInsurances(@PathVariable("healthId")int id,@AuthenticationPrincipal UserDetails userDetails, @Valid HealthRequestDTO healthRequestDTO){
+    public ResponseEntity<?> postHealthInsurances(@PathVariable("healthId")int id,@AuthenticationPrincipal UserDetails userDetails, @Valid @ModelAttribute HealthRequestDTO healthRequestDTO){
         String username = userDetails.getUsername();
         SiteUser siteUser = userService.getByUsername(username);
         try {
             HealthInsurance healthInsurance = insuranceService.getHealthBySiteUserAndId(siteUser,id);
-            if (ChronoUnit.DAYS.between(healthRequestDTO.getDate(), healthInsurance.getStartDate()) < 0) {
+            if (healthRequestDTO.getDate().compareTo(healthInsurance.getStartDate()) < 0) {
                 return ResponseUtil.createErrorResponse(HttpStatus.BAD_REQUEST,"보험계약 날짜 내에 발생한 비용만 청구 가능합니다.");
             }
-            //비동기 신청
-            CompletableFuture<Request> requestFuture = requestService.requestHealth(siteUser, healthRequestDTO, id);
-            requestFuture.thenCompose(request -> transactionService.transaction(siteUser, request));
+            requestService.requestHealth(siteUser, healthRequestDTO, id);
             return ResponseUtil.createSuccessResponse("status",true);
         }catch (DataNotFoundException e){
             return ResponseUtil.createErrorResponse(HttpStatus.BAD_REQUEST,"보험이 가입되어있지 않습니다.");

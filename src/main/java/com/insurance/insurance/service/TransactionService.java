@@ -17,11 +17,11 @@ import java.util.concurrent.CompletableFuture;
 public class TransactionService {
 
     private final TransactionRepository transactionRepository;
-    public CompletableFuture<Transaction> transaction(SiteUser siteUser, Request request) {
-        String description = request.getDescription();
-        if (description != null){
+    public Transaction transaction(SiteUser siteUser, Request request) {
+        String description = request.getStatus();
+        if (description != "approved"){
             // 조건을 만족하지 않으면 null 반환
-            return CompletableFuture.completedFuture(null);
+            return null;
         }
 
         int price = request.getPrice();
@@ -32,8 +32,9 @@ public class TransactionService {
         //돈지급
         //
         transaction.setStatus("지급완료");
+        request.setPayment_date(dateTime);
 
-        return CompletableFuture.completedFuture(transactionRepository.save(transaction));
+        return transactionRepository.save(transaction);
     }
 
     public List<Transaction> getBySiteUser(SiteUser siteUser) {

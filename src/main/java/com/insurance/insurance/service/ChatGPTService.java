@@ -12,7 +12,7 @@ import java.util.Map;
 public class ChatGPTService {
 
     private static final String API_URL = "https://api.openai.com/v1/chat/completions";
-    private static final String API_KEY = "your_api_key_here"; // OpenAI API 키를 여기에 입력
+    private static final String API_KEY = "비밀"; // OpenAI API 키를 여기에 입력
 
     private final OkHttpClient client = new OkHttpClient();
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -20,8 +20,10 @@ public class ChatGPTService {
     public String getChatGPTResponse(String userMessage) throws IOException {
         // 요청 본문 구성
         Map<String, Object> message = new HashMap<>();
-        message.put("model", "gpt-4");
+        message.put("model", "gpt-4o");
+
         message.put("messages", new Object[]{
+                Map.of("role","system","content","보험 전문가가 돼서 청구 확인 역할을 해줘"),
                 Map.of("role", "user", "content", userMessage)
         });
         message.put("max_tokens", 1000);
@@ -40,11 +42,25 @@ public class ChatGPTService {
 
         // 요청 실행 및 응답 처리
         try (Response response = client.newCall(request).execute()) {
-            if (response.isSuccessful()) {
-                Map<String, Object> responseBody = objectMapper.readValue(response.body().string(), Map.class);
-                return (String) ((Map) ((Map) responseBody.get("choices")).get(0)).get("content");
+            if (response.isSuccessful() && response.body() != null) {
+                // 응답 본문을 문자열로 저장
+                String responseBodyString = response.body().string();
+                System.out.println(responseBodyString); // 로깅용
+
+                // API 응답을 Map으로 변환
+                Map<String, Object> responseBody = objectMapper.readValue(responseBodyString, Map.class);
+
+                // `choices` 배열에서 첫 번째 요소의 `message`의 `content`를 가져옴
+                var choices = (java.util.List<Map<String, Object>>) responseBody.get("choices");
+                if (!choices.isEmpty()) {
+                    Map<String, Object> firstChoice = choices.get(0);
+                    Map<String, Object> messageContent = (Map<String, Object>) firstChoice.get("message");
+                    return (String) messageContent.get("content");
+                } else {
+                    throw new RuntimeException("ChatGPT 응답에 'choices'가 비어 있습니다.");
+                }
             } else {
-                throw new RuntimeException("ChatGPT API 호출 실패: " + response.body().string());
+                throw new RuntimeException("ChatGPT API 호출 실패: " + (response.body() != null ? response.body().string() : "응답 없음"));
             }
         }
     }
