@@ -1,6 +1,7 @@
 package com.insurance.insurance.dto;
 
 
+import jakarta.annotation.Nullable;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,6 +19,7 @@ public class FireRequestDTO {
     private List<MultipartFile> receiptImages; // 영수증 이미지 첨부
     private String damageType; // 손해 유형(예: "주택", "상업시설", "가재도구", "생명구조")
     private List<MultipartFile> incidentReports; // 화재 사고 보고서 첨부
+    @Nullable
     private List<MultipartFile> additionalDocuments; // 추가 서류 첨부
 }
 

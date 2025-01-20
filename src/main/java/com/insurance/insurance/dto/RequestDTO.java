@@ -14,24 +14,23 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 public class RequestDTO {
-    private Integer requestID;
-    private String productName;
+    private Integer requestId;
+    private String productTitle;
     private String type;        //요청타입
     private String content;     //요청내용
     private Integer price;      //비용
-    private LocalDateTime request_date;     //요청일
-    private LocalDateTime payment_date;     //지급일
+    private LocalDateTime requestDate;     //요청일
     private String status;      //상태
     private String description;     //설명
+    private Integer transactionId;
 
     public void EntityToDTO(Request request){
-        this.requestID = request.getId();
-        this.productName = request.getInsurance().getProduct().getName();
+        this.requestId = request.getId();
+        this.productTitle = request.getInsurance().getProduct().getTitle();
         this.type = request.getType();
         this.content = request.getContent();
         this.price = request.getPrice();
-        this.request_date = request.getRequest_date();
-        this.payment_date = request.getPayment_date();
+        this.requestDate = request.getRequestDate();
         this.status = Status.getKoreanStatus(request.getStatus());
         this.description = request.getDescription();
     }

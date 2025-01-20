@@ -14,28 +14,28 @@ import java.util.List;
 public class BatchService {
     private final InsuranceService insuranceService;
 
-    private void deletePending(){
+    public void deletePending(){
         insuranceService.deleteAllByStatus("pending");
     }
 
-    private List<Insurance> getRenewable(){
+    public List<Insurance> getRenewable(){
         List<Insurance> insuranceList = insuranceService.getInsuranceRenewable();
         return insuranceList;
     }
 
-    private void setRenewable(List<Insurance> insuranceList){
+    public void setRenewable(List<Insurance> insuranceList){
         insuranceService.setInsuranceRenewable(insuranceList);
     }
 
-    private void setExpired(){
+    public void setExpired(){
         insuranceService.setInsuranceExpired();
     }
 
-    private List<RenewableInsurance> getDontRenew(){
+    public List<RenewableInsurance> getDontRenew(){
         return insuranceService.getDontRenew();
     }
 
-    private void setDontRenew(List<RenewableInsurance> renewableInsuranceList){
+    public void setDontRenew(List<RenewableInsurance> renewableInsuranceList){
         insuranceService.setDontRenew(renewableInsuranceList);
     }
 

@@ -13,14 +13,23 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class TransactionDTO {
     private Integer transactionId;
-    private String productName;
+    private String productTitle;
     private LocalDateTime dateTime;
     private String status;
+    private Integer price;
+    private String bank;
+    private String bankAccount;
+    private Integer requestId;
+
 
     public void EntityToDTO(Transaction transaction){
         this.transactionId = transaction.getId();
-        this.productName = transaction.getInsurance().getProduct().getName();
+        this.productTitle = transaction.getRequest().getInsurance().getProduct().getTitle();
         this.dateTime = transaction.getDateTime();
         this.status = Status.getKoreanStatus(transaction.getStatus());
+        this.price =transaction.getPrice();
+        this.bank = transaction.getRequest().getInsurance().getBank();
+        this.bankAccount = transaction.getRequest().getInsurance().getBankAccount();
+        this.requestId = transaction.getRequest().getId();
     }
 }

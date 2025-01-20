@@ -2,8 +2,11 @@ package com.insurance.insurance.initializer;
 
 import com.insurance.insurance.entity.Product;
 import com.insurance.insurance.entity.RiskRank;
+import com.insurance.insurance.entity.Transaction;
+import com.insurance.insurance.exception.DataNotFoundException;
 import com.insurance.insurance.repository.ProductRepository;
 import com.insurance.insurance.repository.RiskRankRepository;
+import com.insurance.insurance.repository.TransactionRepository;
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +14,8 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
+import java.util.zip.DataFormatException;
 
 @RequiredArgsConstructor
 @Component
@@ -18,6 +23,7 @@ public class ProductInitializer {
 
     private final ProductRepository productRepository;
     private final RiskRankRepository riskRankRepository;
+    private final TransactionRepository transactionRepository;
 
     @PostConstruct
     @Transactional

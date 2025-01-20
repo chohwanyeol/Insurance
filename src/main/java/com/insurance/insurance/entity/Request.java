@@ -25,17 +25,20 @@ public class Request {
     private String type;        //요청타입
     private String content;     //요청내용
     private Integer price;      //비용
-    private LocalDateTime request_date;     //요청일
-    private LocalDateTime payment_date;     //지급일
+    private LocalDateTime requestDate;     //요청일
+    @OneToOne
+    private Transaction transaction;
     private String status;     //[note: "pending, approved, rejected"] //상태
     private String description;     //설명
 
-    public Request(Insurance insurance, String claimType, String content, Integer price, LocalDateTime request_date, String status) {
+
+    public Request(SiteUser siteUser,Insurance insurance, String claimType, String content, Integer price, LocalDateTime requestDate, String status) {
+        this.siteUser = siteUser;
         this.insurance = insurance;
         this.type = claimType;
         this.content = content;
         this.price = price;
-        this.request_date = request_date;
+        this.requestDate = requestDate;
         this.status = status;
     }
 

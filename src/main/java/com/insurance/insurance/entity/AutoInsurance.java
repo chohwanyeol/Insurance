@@ -11,7 +11,6 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @NoArgsConstructor
-
 public class AutoInsurance extends Insurance{
 
     private String vehicleNumber;    // 차량 번호

@@ -21,8 +21,8 @@ public class Transaction {
     @ManyToOne
     private SiteUser siteUser;
 
-    @ManyToOne
-    private Insurance insurance;
+    @OneToOne
+    private Request request;
 
     private Integer price;      //금액
 
@@ -30,9 +30,9 @@ public class Transaction {
 
     private String status;      //[note: "pending, approved, rejected"]
 
-    public Transaction(SiteUser siteUser, Insurance insurance, Integer price, LocalDateTime dateTime, String status) {
+    public Transaction(SiteUser siteUser, Request request, Integer price, LocalDateTime dateTime, String status) {
         this.siteUser = siteUser;
-        this.insurance = insurance;
+        this.request = request;
         this.price =price;
         this.dateTime = dateTime;
         this.status=status;

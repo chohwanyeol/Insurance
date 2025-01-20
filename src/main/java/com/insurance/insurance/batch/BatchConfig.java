@@ -20,6 +20,7 @@ public class BatchConfig {
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
     private final InsuranceService insuranceService;
+    private final BatchService batchService;
 
     @Bean
     public Job dailyJob() {
@@ -35,7 +36,7 @@ public class BatchConfig {
     public Step deletePendingStep() {
         return new StepBuilder("deletePendingStep", jobRepository)
                 .tasklet((contribution, chunkContext) -> {
-                    insuranceService.deleteAllByStatus("pending");
+                    batchService.deletePending();
                     return RepeatStatus.FINISHED;
                 }, transactionManager)
                 .build();
@@ -46,7 +47,7 @@ public class BatchConfig {
         return new StepBuilder("setDontRenewStep", jobRepository)
                 .tasklet((contribution, chunkContext) -> {
                     // 필요한 데이터를 가져온 뒤 갱신 로직 수행
-                    insuranceService.setDontRenew(insuranceService.getDontRenew());
+                    batchService.setDontRenew(batchService.getDontRenew());
                     return RepeatStatus.FINISHED;
                 }, transactionManager)
                 .build();
@@ -58,7 +59,7 @@ public class BatchConfig {
         return new StepBuilder("setRenewableStep", jobRepository)
                 .tasklet((contribution, chunkContext) -> {
                     // 필요한 데이터를 가져온 뒤 갱신 로직 수행
-                    insuranceService.setInsuranceRenewable(insuranceService.getInsuranceRenewable());
+                    batchService.setRenewable(batchService.getRenewable());
                     return RepeatStatus.FINISHED;
                 }, transactionManager)
                 .build();
@@ -68,7 +69,7 @@ public class BatchConfig {
     public Step setExpiredStep() {
         return new StepBuilder("setExpiredStep", jobRepository)
                 .tasklet((contribution, chunkContext) -> {
-                    insuranceService.setInsuranceExpired();
+                    batchService.setExpired();
                     return RepeatStatus.FINISHED;
                 }, transactionManager)
                 .build();

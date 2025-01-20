@@ -1,27 +1,30 @@
 package com.insurance.insurance.service;
+
 import jakarta.transaction.Transactional;
 import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;
+import org.apache.tika.Tika;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
-
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
-
 
 @Service
 public class OCRService {
 
+    private final Tika tika = new Tika(); // Apache Tika로 파일 형식 판별
+
     @Transactional
-    public String extractText(MultipartFile file) throws IOException {
-        if (file.isEmpty()) {
+    public String extractText(byte[] fileBytes) throws IOException {
+        if (fileBytes == null || fileBytes.length == 0) {
             throw new IllegalArgumentException("파일이 비어 있습니다.");
         }
 
@@ -29,16 +32,21 @@ public class OCRService {
         tesseract.setDatapath("tessdata");
         tesseract.setLanguage("kor+eng");
 
-        // MultipartFile을 임시 디렉토리에 저장
-        Path tempFile = Files.createTempFile("ocr_", "_" + file.getOriginalFilename());
-        file.transferTo(tempFile.toFile());
+        // 파일 데이터 기반 판별
+        String mimeType = tika.detect(fileBytes);
+        System.out.println("파일 MIME 타입: " + mimeType);
+
+        // 임시 파일 생성
+        Path tempFile = Files.createTempFile("ocr_", null);
+        Files.write(tempFile, fileBytes);
 
         try {
-            String extension = getFileExtension(file.getOriginalFilename());
-            if ("pdf".equalsIgnoreCase(extension)) {
+            if (mimeType.equals("application/pdf")) {
                 return extractTextFromPDF(tempFile.toFile(), tesseract);
-            } else {
+            } else if (mimeType.startsWith("image/")) {
                 return extractTextFromImage(tempFile.toFile(), tesseract);
+            } else {
+                throw new IllegalArgumentException("지원되지 않는 파일 형식입니다. PDF 또는 이미지 파일만 지원됩니다.");
             }
         } finally {
             // 임시 파일 삭제
@@ -73,12 +81,5 @@ public class OCRService {
         } catch (TesseractException e) {
             throw new RuntimeException("OCR 실패 (이미지): " + e.getMessage(), e);
         }
-    }
-
-    private String getFileExtension(String filename) {
-        if (filename == null || !filename.contains(".")) {
-            return "";
-        }
-        return filename.substring(filename.lastIndexOf(".") + 1);
     }
 }

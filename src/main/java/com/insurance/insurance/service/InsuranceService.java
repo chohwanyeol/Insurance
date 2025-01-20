@@ -105,7 +105,7 @@ public class InsuranceService {
         String bank = insuranceJoinDTO.getBank();
         String bankAccount = insuranceJoinDTO.getAccount();
         LocalDate startDate = LocalDate.now().plusDays(1);
-        LocalDate endDate = startDate.plusYears(insuranceJoinDTO.getDuration());
+        LocalDate endDate = startDate.plusYears(insuranceJoinDTO.getDuration()).minusDays(1);
 
         // 부모 클래스 필드 설정
         insurance.setSiteUser(siteUser);
@@ -124,7 +124,15 @@ public class InsuranceService {
 
     @Transactional
     public Insurance cancel(Insurance insurance) {
-        insurance.setStatus("cancelled");
+        //insurance.setStatus("cancelled");
+        LocalDate localDate = insurance.getEndDate();
+        LocalDate currentDate = LocalDate.now();
+        int day = localDate.getDayOfMonth();
+        LocalDate targetDate = currentDate.withDayOfMonth(day);
+        if (targetDate.compareTo(currentDate) <0){
+            targetDate = targetDate.plusMonths(1);
+        }
+        insurance.setEndDate(targetDate);
         return insuranceRepository.save(insurance);
     }
 
@@ -522,6 +530,7 @@ public class InsuranceService {
                 );
     }
 
+
     public HealthInsurance getHealthBySiteUserAndStatus(SiteUser siteUser, String status) {
         return healthInsuranceRepository.findBySiteUserAndStatus(siteUser,status)
                 .orElseThrow(
@@ -529,8 +538,18 @@ public class InsuranceService {
                 );
     }
 
+    @Transactional
     public void deleteRenewable(RenewableInsurance renewableInsurance) {
         renewableInsuranceRepository.delete(renewableInsurance);
+    }
+
+
+    @Transactional
+    public Insurance updateBank(Insurance insurance, UpdateBankDTO updateBankDTO) {
+        insurance.setBank(updateBankDTO.getBank());
+        insurance.setBankAccount(updateBankDTO.getAccount());
+        insurance = insuranceRepository.save(insurance);
+        return insurance;
     }
 }
 

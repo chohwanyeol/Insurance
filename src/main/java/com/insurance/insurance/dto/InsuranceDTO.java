@@ -14,6 +14,7 @@ import java.time.LocalDate;
 public class InsuranceDTO {
     private Integer insuranceId;         // 보험 ID
     private String productTitle;          // 보험 이름
+    private String productName;          //보험 유형
     private String productDescription;   // 보험 설명
     private String userName;             // 가입자 이름
     private String userBirthday;         // 가입자 생년월일
@@ -34,6 +35,7 @@ public class InsuranceDTO {
         UserInfo userInfo = insurance.getSiteUser().getUserInfo();
         this.insuranceId = insurance.getId();
         this.productTitle = product.getTitle();
+        this.productName = product.getName();
         this.productDescription = product.getDescription();
         this.bank = insurance.getBank();
         this.bankAccount = insurance.getBankAccount();
@@ -46,6 +48,7 @@ public class InsuranceDTO {
         this.endDate = insurance.getEndDate();
         this.userName = userInfo.getName();
         this.userBirthday = userInfo.getBirthDay().toString();
+
     }
 
 }

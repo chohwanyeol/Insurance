@@ -3,13 +3,17 @@ package com.insurance.insurance.service;
 
 import com.insurance.insurance.dto.AutoRequestDTO;
 import com.insurance.insurance.dto.FireRequestDTO;
+import com.insurance.insurance.dto.HealthInsuranceDTO;
 import com.insurance.insurance.dto.HealthRequestDTO;
 import com.insurance.insurance.entity.*;
 import com.insurance.insurance.exception.DataNotFoundException;
 import com.insurance.insurance.repository.RequestRepository;
 import com.insurance.insurance.repository.UserInfoRepository;
+import com.insurance.insurance.util.MultipartUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,52 +35,50 @@ public class RequestService {
     private final TransactionService transactionService;
 
     @Transactional
-    public CompletableFuture<Void> requestHealth(SiteUser siteUser, HealthRequestDTO healthRequestDTO,Integer id){
+    public CompletableFuture<Void> requestHealth(SiteUser siteUser, HealthRequestDTO healthRequestDTO,Integer id, List<byte[]> receipts, List<byte[]> additionalDocuments){
         return CompletableFuture.runAsync(() -> {
+
             String content = healthRequestDTO.getContent();
             int price = healthRequestDTO.getPrice();
-            String receipt = "";
-            List<String> receipts = healthRequestDTO.getReceiptImages().stream()
-                    .map(file -> {
-                        try {
-                            return ocrService.extractText(file); // OCR 수행
-                        } catch (IOException e) {
-                            throw new RuntimeException("파일 처리 실패: " + e.getMessage(), e);
-                        }
-                    })
-                    .toList(); // Stream 결과를 List로 변환
             String date = healthRequestDTO.getDate().toString();
             String claimType = healthRequestDTO.getClaimType();
             String hospitalName = healthRequestDTO.getHospitalName();
 
-
-            List<String> additionalDocuments = healthRequestDTO.getAdditionalDocuments().stream()
-                    .filter(file -> file.getSize() > 0)
-                    .map(file -> {
-                        try {
-                            return ocrService.extractText(file); // OCR 수행
-                        } catch (IOException e) {
-                            throw new RuntimeException("파일 처리 실패: " + e.getMessage(), e);
-                        }
-                    })
-                    .toList(); // Stream 결과를 List로 변환
-
             HealthInsurance healthInsurance = insuranceService.getHealthBySiteUserAndId(siteUser, id);
             RiskRank riskRank = healthInsurance.getRiskRank();
             String description = riskRank.getDescription();
-
-
-            Integer deductible_rate = riskRank.getDeductible_rate();
-            Integer coverage_limit = riskRank.getCoverage_limit();
-            price = (int) Math.min(price * (deductible_rate / 100), coverage_limit);
             //request 생성
-            LocalDateTime request_date = LocalDateTime.now();
-            Request request = new Request(healthInsurance, claimType, content, price, request_date, "pending");
+            LocalDateTime requestDate = LocalDateTime.now();
+            Request request = new Request(siteUser,healthInsurance, claimType, content, price, requestDate, "pending");
             request = requestRepository.save(request);
 
+            // OCR 처리
+            List<String> receiptTexts = receipts.stream()
+                    .map(receipt -> {
+                        try {
+                            return ocrService.extractText(receipt);
+                        } catch (IOException e) {
+                            throw new RuntimeException("OCR 처리 실패: " + e.getMessage(), e);
+                        }
+                    })
+                    .toList();
+            MultipartUtil.cleanupFiles(receipts);
+
+            List<String> additionalDocumentTexts = additionalDocuments.stream()
+                    .filter(document -> document != null && document.length > 0)
+                    .map(document -> {
+                        try {
+                            return ocrService.extractText(document);
+                        } catch (IOException e) {
+                            throw new RuntimeException("OCR 처리 실패: " + e.getMessage(), e);
+                        }
+                    })
+                    .toList();
+            MultipartUtil.cleanupFiles(additionalDocuments);
 
             //메시지검증
-            String userMessage = GPTHealthMessage(content, price, receipts, date, claimType, hospitalName, additionalDocuments, description);
+            String userMessage = GPTHealthMessage(content, price, receiptTexts, date, claimType, hospitalName, additionalDocumentTexts, description);
+            System.out.println("메시지 : " + userMessage);
             String responseMessage = "";
             try {
                 responseMessage = chatGPTService.getChatGPTResponse(userMessage);
@@ -91,13 +93,14 @@ public class RequestService {
                 System.out.println("답변 : " + responseMessage);
                 request.setDescription(responseMessage);
             }
-            request.setSiteUser(siteUser);
             request = requestRepository.save(request);
-            Transaction transaction = transactionService.transaction(siteUser, request);
 
-            if (transaction!=null){
-                request.setPayment_date(transaction.getDateTime());
-            }
+
+            Integer deductible_rate = riskRank.getDeductible_rate();
+            Integer coverage_limit = riskRank.getCoverage_limit();
+            price = (int) Math.min(price * (deductible_rate / 100.0), coverage_limit * price);
+
+            Transaction transaction = transactionService.transaction(siteUser, request, price);
         }).exceptionally(ex -> {
             System.err.println("Error during Request: " + ex.getMessage());
             return null;
@@ -106,64 +109,59 @@ public class RequestService {
 
 
     @Transactional
-    public CompletableFuture<Void> requestFire(SiteUser siteUser, FireRequestDTO fireRequestDTO, Integer id) {
+    public CompletableFuture<Void> requestFire(SiteUser siteUser, FireRequestDTO fireRequestDTO, Integer id, List<byte[]> receipts,List<byte[]> incidentReports, List<byte[]> additionalDocuments) {
         return CompletableFuture.runAsync(() -> {
             UserInfo userInfo = siteUser.getUserInfo();
             //dto정보들 받아오기
             String content = fireRequestDTO.getContent();
             String date = fireRequestDTO.getDate().toString();
             int price = fireRequestDTO.getPrice();
-            List<String> receipts = fireRequestDTO.getReceiptImages().stream()
-                    .filter(file -> file.getSize() > 0)
-                    .map(file -> {
-                        try {
-                            return ocrService.extractText(file); // OCR 수행
-                        } catch (IOException e) {
-                            throw new RuntimeException("파일 처리 실패: " + e.getMessage(), e);
-                        }
-                    })
-                    .toList(); // Stream 결과를 List로 변환
-
             String damageType = fireRequestDTO.getDamageType();
-
-            List<String> incidentReports = fireRequestDTO.getIncidentReports().stream()
-                    .filter(file -> file.getSize() > 0)
-                    .map(file -> {
-                        try {
-                            return ocrService.extractText(file); // OCR 수행
-                        } catch (IOException e) {
-                            throw new RuntimeException("파일 처리 실패: " + e.getMessage(), e);
-                        }
-                    })
-                    .toList(); // Stream 결과를 List로 변환
-
-            List<String> additionalDocuments = fireRequestDTO.getAdditionalDocuments().stream()
-                    .filter(file -> file.getSize() > 0)
-                    .map(file -> {
-                        try {
-                            return ocrService.extractText(file); // OCR 수행
-                        } catch (IOException e) {
-                            throw new RuntimeException("파일 처리 실패: " + e.getMessage(), e);
-                        }
-                    })
-                    .toList(); // Stream 결과를 List로 변환
-
             FireInsurance fireInsurance = insuranceService.getFireBySiteUserAndId(siteUser,id);
             RiskRank riskRank = fireInsurance.getRiskRank();
             String description = riskRank.getDescription();
-
-
-            Integer deductible_rate = riskRank.getDeductible_rate();
-            Integer coverage_limit = riskRank.getCoverage_limit();
-            price = (int)Math.min(price * (deductible_rate/100), coverage_limit);
             //request 생성
-            LocalDateTime request_date = LocalDateTime.now();
-            Request request = new Request(fireInsurance,damageType,content,price,request_date,"pending");
+            LocalDateTime requestDate = LocalDateTime.now();
+            Request request = new Request(siteUser,fireInsurance,damageType,content,price,requestDate,"pending");
             request= requestRepository.save(request);
 
+            // OCR 처리
+            List<String> receiptTexts = receipts.stream()
+                    .map(receipt -> {
+                        try {
+                            return ocrService.extractText(receipt);
+                        } catch (IOException e) {
+                            throw new RuntimeException("OCR 처리 실패: " + e.getMessage(), e);
+                        }
+                    })
+                    .toList();
+            MultipartUtil.cleanupFiles(receipts);
 
+            List<String> incidentReportTexts = incidentReports.stream()
+                    .filter(document -> document != null && document.length > 0)
+                    .map(document -> {
+                        try {
+                            return ocrService.extractText(document);
+                        } catch (IOException e) {
+                            throw new RuntimeException("OCR 처리 실패: " + e.getMessage(), e);
+                        }
+                    })
+                    .toList();
+            MultipartUtil.cleanupFiles(incidentReports);
+
+            List<String> additionalDocumentTexts = additionalDocuments.stream()
+                    .filter(document -> document != null && document.length > 0)
+                    .map(document -> {
+                        try {
+                            return ocrService.extractText(document);
+                        } catch (IOException e) {
+                            throw new RuntimeException("OCR 처리 실패: " + e.getMessage(), e);
+                        }
+                    })
+                    .toList();
+            MultipartUtil.cleanupFiles(additionalDocuments);
             //메시지검증
-            String userMessage = GPTFireMessage(content, receipts, date, price, damageType, incidentReports, additionalDocuments, description);
+            String userMessage = GPTFireMessage(content, receiptTexts, date, price, damageType, incidentReportTexts, additionalDocumentTexts, description);
             String responseMessage = "";
             try {
                 responseMessage = chatGPTService.getChatGPTResponse(userMessage);
@@ -177,13 +175,14 @@ public class RequestService {
                 request.setStatus("rejected");
                 request.setDescription(responseMessage);
             }
-            request.setSiteUser(siteUser);
-            request = requestRepository.save(request);
-            Transaction transaction = transactionService.transaction(siteUser, request);
 
-            if (transaction!=null){
-                request.setPayment_date(transaction.getDateTime());
-            }
+            request = requestRepository.save(request);
+            Integer deductible_rate = riskRank.getDeductible_rate();
+            Integer coverage_limit = riskRank.getCoverage_limit();
+            price = (int) Math.min(price * (deductible_rate / 100.0), coverage_limit * price);
+            Transaction transaction = transactionService.transaction(siteUser, request,price);
+
+
         }).exceptionally(ex -> {
             System.err.println("Error during Request: " + ex.getMessage());
             return null;
@@ -193,64 +192,66 @@ public class RequestService {
 
 
     @Transactional
-    public CompletableFuture<Void> requestAuto(SiteUser siteUser, AutoRequestDTO autoRequestDTO, Integer id) {
+    public CompletableFuture<Void> requestAuto(SiteUser siteUser, AutoRequestDTO autoRequestDTO, Integer id,List<byte[]> receipts,List<byte[]> policeReports,List<byte[]> additionalDocuments) {
         return CompletableFuture.runAsync(() -> {
             UserInfo userInfo = siteUser.getUserInfo();
             //dto정보들 받아오기
             String content = autoRequestDTO.getContent();
             String date = autoRequestDTO.getDate().toString();
             int price = autoRequestDTO.getPrice();
-            List<String> receipts = autoRequestDTO.getReceiptImages().stream()
-                    .filter(file -> file.getSize() > 0)
-                    .map(file -> {
-                        try {
-                            return ocrService.extractText(file); // OCR 수행
-                        } catch (IOException e) {
-                            throw new RuntimeException("파일 처리 실패: " + e.getMessage(), e);
-                        }
-                    })
-                    .toList(); // Stream 결과를 List로 변환
 
             String damageType = autoRequestDTO.getDamageType();
             String accidentLocation = autoRequestDTO.getAccidentLocation();
-
-            List<String> policeReports = autoRequestDTO.getPoliceReports().stream()
-                    .filter(file -> file.getSize() > 0)
-                    .map(file -> {
-                        try {
-                            return ocrService.extractText(file); // OCR 수행
-                        } catch (IOException e) {
-                            throw new RuntimeException("파일 처리 실패: " + e.getMessage(), e);
-                        }
-                    })
-                    .toList(); // Stream 결과를 List로 변환
-
-            List<String> additionalDocuments = autoRequestDTO.getAdditionalDocuments().stream()
-                    .map(file -> {
-                        try {
-                            return ocrService.extractText(file); // OCR 수행
-                        } catch (IOException e) {
-                            throw new RuntimeException("파일 처리 실패: " + e.getMessage(), e);
-                        }
-                    })
-                    .toList(); // Stream 결과를 List로 변환
 
             AutoInsurance autoInsurance = insuranceService.getAutoBySiteUserAndId(siteUser,id);
             RiskRank riskRank = autoInsurance.getRiskRank();
             String description = riskRank.getDescription();
 
-
-            Integer deductible_rate = riskRank.getDeductible_rate();
-            Integer coverage_limit = riskRank.getCoverage_limit();
-            price = (int)Math.min(price * (deductible_rate/100), coverage_limit);
             //request 생성
-            LocalDateTime request_date = LocalDateTime.now();
-            Request request = new Request(autoInsurance,damageType,content,price,request_date,"pending");
+            LocalDateTime requestDate = LocalDateTime.now();
+            Request request = new Request(siteUser,autoInsurance,damageType,content,price,requestDate,"pending");
             request= requestRepository.save(request);
 
 
+            // OCR 처리
+            List<String> receiptTexts = receipts.stream()
+                    .map(receipt -> {
+                        try {
+                            return ocrService.extractText(receipt);
+                        } catch (IOException e) {
+                            throw new RuntimeException("OCR 처리 실패: " + e.getMessage(), e);
+                        }
+                    })
+                    .toList();
+            MultipartUtil.cleanupFiles(receipts);
+
+
+            List<String> policeReportTexts = policeReports.stream()
+                    .filter(document -> document != null && document.length > 0)
+                    .map(document -> {
+                        try {
+                            return ocrService.extractText(document);
+                        } catch (IOException e) {
+                            throw new RuntimeException("OCR 처리 실패: " + e.getMessage(), e);
+                        }
+                    })
+                    .toList();
+            MultipartUtil.cleanupFiles(policeReports);
+
+            List<String> additionalDocumentTexts = additionalDocuments.stream()
+                    .filter(document -> document != null && document.length > 0)
+                    .map(document -> {
+                        try {
+                            return ocrService.extractText(document);
+                        } catch (IOException e) {
+                            throw new RuntimeException("OCR 처리 실패: " + e.getMessage(), e);
+                        }
+                    })
+                    .toList();
+            MultipartUtil.cleanupFiles(additionalDocuments);
+
             //메시지검증
-            String userMessage = GPTAutoMessage(content, price,receipts, date, damageType, accidentLocation,policeReports, additionalDocuments, description);
+            String userMessage = GPTAutoMessage(content, price,receiptTexts, date, damageType, accidentLocation,policeReportTexts, additionalDocumentTexts, description);
             String responseMessage = "";
             try {
                 responseMessage = chatGPTService.getChatGPTResponse(userMessage);
@@ -264,13 +265,13 @@ public class RequestService {
                 request.setStatus("rejected");
                 request.setDescription(responseMessage);
             }
-            request.setSiteUser(siteUser);
             request = requestRepository.save(request);
-            Transaction transaction = transactionService.transaction(siteUser, request);
+            Integer deductible_rate = riskRank.getDeductible_rate();
+            Integer coverage_limit = riskRank.getCoverage_limit();
+            price = (int) Math.min(price * (deductible_rate / 100.0), coverage_limit * price);
+            Transaction transaction = transactionService.transaction(siteUser, request,price);
 
-            if (transaction!=null){
-                request.setPayment_date(transaction.getDateTime());
-            }
+
         }).exceptionally(ex -> {
             System.err.println("Error during Request: " + ex.getMessage());
             return null;
@@ -325,7 +326,8 @@ public class RequestService {
                 .append("따라서 텍스트 내용이 정확하지 않거나 중복될 가능성이 있으니 유의하여 검토하세요.\n\n")
                 .append("검증 결과:\n")
                 .append("- 가장중요 : 보험비를 지급할 수 있다면 앞뒤 내용 사족 붙이지말고 절대 아무것도 없이 무조건 true 만 출력하세요.\n")
-                .append("- 보험비를 받을 수 없다면 그 이유를 3줄 이내로 작성하고, 고객에게 전달할 형식으로 존댓말로 작성하세요.\n");
+                .append("- 보험비를 받을 수 없다면 그 이유를 3줄 이내로 작성하고, 고객에게 전달할 형식으로 존댓말로 작성하세요.\n")
+                .append("- 보험비 받을 수 있는지 검사는 확실하게 해주세요.");
 
         return message.toString();
     }
@@ -371,7 +373,8 @@ public class RequestService {
                 .append("따라서 텍스트 내용이 정확하지 않거나 중복될 가능성이 있으니 유의하여 검토하세요.\n\n")
                 .append("검토 결과:\n")
                 .append("- 가장중요 : 보험비를 지급할 수 있다면 앞뒤 내용 사족 붙이지말고 절대 아무것도 없이 무조건 true 만 출력하세요.\n")
-                .append("- 지급할 수 없다면 이유를 3줄 이내로 작성하여, 고객에게 전달할 형식으로 존댓말로 작성해 주세요.\n");
+                .append("- 지급할 수 없다면 이유를 3줄 이내로 작성하여, 고객에게 전달할 형식으로 존댓말로 작성해 주세요.\n")
+                .append("- 보험비 받을 수 있는지 검사는 확실하게 해주세요.");
 
         return message.toString();
     }
@@ -426,7 +429,8 @@ public class RequestService {
                 .append("따라서 텍스트 내용이 정확하지 않거나 중복될 가능성이 있으니 유의하여 검토하세요.\n\n")
                 .append("검증 결과:\n")
                 .append("- 가장중요 : 보험비를 지급할 수 있다면 앞뒤 내용 사족 붙이지말고 절대 아무것도 없이 무조건 true 만 출력하세요.\n")
-                .append("- 보험비를 받을 수 없다면 그 이유를 3줄 이내로 작성하고, 고객에게 전달할 형식으로 존댓말로 작성하세요.\n");
+                .append("- 보험비를 받을 수 없다면 그 이유를 3줄 이내로 작성하고, 고객에게 전달할 형식으로 존댓말로 작성하세요.\n")
+                .append("- 보험비 받을 수 있는지 검사는 확실하게 해주세요.");
 
         return message.toString();
     }
@@ -437,9 +441,15 @@ public class RequestService {
         return requestRepository.findAllBySiteUser(siteUser);
     }
 
+    public Page<Request> getBySiteUser(SiteUser siteUser, Pageable pageable) {
+        return requestRepository.findAllBySiteUser(siteUser, pageable);
+    }
+
     public Request getBySiteUserAndId(SiteUser siteUser, Integer id) {
         return requestRepository.findBySiteUserAndId(siteUser,id);
     }
+
+
 
 
 

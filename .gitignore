@@ -35,3 +35,7 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# .env 파일 제외
+.env
+

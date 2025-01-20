@@ -5,6 +5,7 @@ import com.insurance.insurance.dto.*;
 import com.insurance.insurance.entity.*;
 import com.insurance.insurance.exception.DataNotFoundException;
 import com.insurance.insurance.service.*;
+import com.insurance.insurance.util.MultipartUtil;
 import com.insurance.insurance.util.ResponseUtil;
 import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.validation.Valid;
@@ -101,8 +102,11 @@ public class RequestController {
             if (fireRequestDTO.getDate().compareTo(fireInsurance.getStartDate()) < 0) {
                 return ResponseUtil.createErrorResponse(HttpStatus.BAD_REQUEST,"보험계약 날짜 내에 발생한 비용만 청구 가능합니다.");
             }
+            List<byte[]> receipts = MultipartUtil.copyMultipartFiles(fireRequestDTO.getReceiptImages());
+            List<byte[]> incidentReports = MultipartUtil.copyMultipartFiles(fireRequestDTO.getIncidentReports());
+            List<byte[]> additionalDocuments = MultipartUtil.copyMultipartFiles(fireRequestDTO.getAdditionalDocuments());
             //비동기 신청
-            requestService.requestFire(siteUser, fireRequestDTO, id);
+            requestService.requestFire(siteUser, fireRequestDTO, id,receipts,incidentReports,additionalDocuments);
             return ResponseEntity.ok(Map.of("status",true));
         }catch (DataNotFoundException e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("status",false));
@@ -158,7 +162,10 @@ public class RequestController {
             if (autoRequestDTO.getDate().compareTo(autoInsurance.getStartDate()) < 0) {
                 return ResponseUtil.createErrorResponse(HttpStatus.BAD_REQUEST,"보험계약 날짜 내에 발생한 비용만 청구 가능합니다.");
             }
-            requestService.requestAuto(siteUser, autoRequestDTO, id);
+            List<byte[]> receipts = MultipartUtil.copyMultipartFiles(autoRequestDTO.getReceiptImages());
+            List<byte[]> policeReports = MultipartUtil.copyMultipartFiles(autoRequestDTO.getPoliceReports());
+            List<byte[]> additionalDocuments = MultipartUtil.copyMultipartFiles(autoRequestDTO.getAdditionalDocuments());
+            requestService.requestAuto(siteUser, autoRequestDTO, id,receipts,policeReports,additionalDocuments);
 
             return ResponseEntity.ok(Map.of("status",true));
         }catch (DataNotFoundException e){
@@ -211,7 +218,10 @@ public class RequestController {
             if (healthRequestDTO.getDate().compareTo(healthInsurance.getStartDate()) < 0) {
                 return ResponseUtil.createErrorResponse(HttpStatus.BAD_REQUEST,"보험계약 날짜 내에 발생한 비용만 청구 가능합니다.");
             }
-            requestService.requestHealth(siteUser, healthRequestDTO, id);
+            List<byte[]> receipts = MultipartUtil.copyMultipartFiles(healthRequestDTO.getReceiptImages());
+            List<byte[]> additionalDocuments = MultipartUtil.copyMultipartFiles(healthRequestDTO.getAdditionalDocuments());
+
+            requestService.requestHealth(siteUser, healthRequestDTO, id,receipts,additionalDocuments);
             return ResponseUtil.createSuccessResponse("status",true);
         }catch (DataNotFoundException e){
             return ResponseUtil.createErrorResponse(HttpStatus.BAD_REQUEST,"보험이 가입되어있지 않습니다.");
